@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GKM - Nhập Hóa Đơn</title>
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<style>
+/* Bố cục: một cột làm việc theo 3 bước (chọn hóa đơn, xem trước, xuất file). Không dùng Internet, font hệ thống. */
+:root{--bg:#f4f6f4;--panel:#ffffff;--fg:#1b2420;--muted:#5d6a64;--line:#d9e0db;--accent:#0f6b52;--accent-fg:#ffffff;--accent-bg:#e0f0e9;
+--km:#8a5a00;--km-bg:#fbefd2;--warn:#9a5b00;--warn-bg:#fdf1d8;--bad:#a23b1d;--bad-bg:#f9e3dc;--drop:#eaf2ee;
+--sans:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;--mono:Consolas,"Cascadia Mono",ui-monospace,Menlo,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111614;--panel:#1a211e;--fg:#e6ece8;--muted:#9aa8a1;--line:#2c3631;--accent:#4fc59c;--accent-fg:#0b1511;--accent-bg:#17352b;--km:#f0c566;--km-bg:#3a2e12;--warn:#f0c566;--warn-bg:#3a2e12;--bad:#f0907a;--bad-bg:#3b211a;--drop:#16211c;color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.5;padding-inline:20px;padding-block:16px 40px}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:16px;min-height:calc(100vh - 56px)}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{flex:none}
+.foot{margin-top:auto;padding-top:12px;border-top:1px solid var(--line);text-align:center;color:var(--muted);font-size:12px}
+h1{font-size:22px;margin:0;font-weight:600}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0;font-weight:600}
+.ver{color:var(--muted);font-size:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.drop{border:2px dashed var(--line);background:var(--drop);border-radius:8px;padding:22px 16px;text-align:center;cursor:pointer;display:flex;flex-direction:column;gap:6px;align-items:center}
+.drop.over{border-color:var(--accent);background:var(--accent-bg)}
+.drop b{font-size:15px}
+.muted{color:var(--muted)}
+button{font:inherit;cursor:pointer}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:6px;padding:8px 16px;font-weight:600}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent);font-weight:500}
+.btn.big{padding:11px 22px;font-size:15px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.files{display:flex;gap:8px;flex-wrap:wrap}
+.file{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 12px;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:200px;flex:0 1 280px;color:var(--fg)}
+.file[aria-selected="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.file b{font-weight:600;overflow-wrap:anywhere}.file span{font-size:12px;color:var(--muted)}
+.stats{display:flex;flex-wrap:wrap;gap:6px 24px;align-items:baseline}
+.stats div{display:flex;gap:6px;align-items:baseline}.stats b{font-family:var(--mono);font-size:20px;font-weight:500}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:99px;white-space:nowrap}
+.pill.ok{background:var(--accent-bg);color:var(--accent)}.pill.km{background:var(--km-bg);color:var(--km)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}.pill.bad{background:var(--bad-bg);color:var(--bad)}
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.list li{display:flex;gap:8px;align-items:baseline}
+.box{border-radius:6px;padding:10px 12px}
+.box.bad{background:var(--bad-bg)}.box.warn{background:var(--warn-bg)}.box.ok{background:var(--accent-bg)}
+.tw{overflow:auto;border:1px solid var(--line);border-radius:6px;max-height:430px}
+table{border-collapse:collapse;width:100%;min-width:720px}
+th,td{padding:5px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{position:sticky;top:0;background:var(--panel);font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
+td.r,th.r{text-align:right}.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+tr.km td{background:var(--km-bg)}tr.loai td{color:var(--muted);text-decoration:line-through}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.fbtn{font-size:12px;background:transparent;color:var(--fg);border:1px solid var(--line);border-radius:99px;padding:3px 12px}
+.fbtn[aria-pressed="true"]{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input[type=text]{font:inherit;flex:1 1 320px;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);font-family:var(--mono);font-size:13px}
+label.chk{display:flex;gap:8px;align-items:flex-start;cursor:pointer}
+details summary{cursor:pointer;color:var(--muted)}
+.path{font-family:var(--mono);overflow-wrap:anywhere;user-select:all}
+.hidden{display:none!important}
+.bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.small{font-size:12px}
+@media (max-width:640px){body{padding-inline:12px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <svg class="logo" viewBox="0 0 256 256" width="40" height="40" role="img" aria-label="Logo GKM"><rect x="8" y="8" width="240" height="240" rx="56" fill="#0f6b52"/><rect x="8" y="8" width="240" height="240" rx="56" fill="none" stroke="#0a4d3b" stroke-width="4"/><g fill="none" stroke="#ffffff" stroke-width="22" stroke-linejoin="round"><path d="M128 92 A45 45 0 1 0 133 150 L133 124 L100 124" stroke-linecap="butt"/><path d="M168 76 L168 166" stroke-linecap="butt"/><path d="M210 76 L168 122 L212 166" stroke-linecap="butt"/></g><g fill="#f2b134"><rect x="62" y="196" width="132" height="10" rx="5"/><circle cx="82" cy="201" r="17"/><circle cx="174" cy="201" r="17"/></g><g fill="#0f6b52"><circle cx="82" cy="201" r="7"/><circle cx="174" cy="201" r="7"/></g></svg>
+    <h1>GKM - Nhập Hóa Đơn</h1>
+    <span class="muted">Gia Khánh Motor · chuyển hóa đơn nhập hàng sang file Excel nhập kho</span>
+    <span class="ver" id="ver"></span>
+    <span style="margin-left:auto" class="row">
+      <button class="btn ghost" id="btnUpd" title="Kiểm tra và cài bản mới của ứng dụng qua Internet">Cập nhật</button>
+      <button class="btn ghost" id="btnReset" title="Xóa hóa đơn đang mở để chọn hóa đơn khác">Làm mới</button>
+    </span>
+  </header>
+
+  <div id="banner" class="box warn hidden"></div>
+
+  <section class="card hidden" id="updPanel" aria-labelledby="hu">
+    <h2 id="hu">Cập nhật ứng dụng</h2>
+    <div class="muted">Chỉ cần Internet khi bấm kiểm tra. Xử lý hóa đơn vẫn chạy hoàn toàn trên máy này. Bản mới được kiểm tra mã SHA-256 trước khi cài, bản cũ giữ lại thành GKM_NhapHoaDon.exe.old.</div>
+    <div class="row"><label for="updRepo" class="small">Kho GitHub chứa bản cập nhật</label><input type="text" id="updRepo" placeholder="tên-tài-khoản/tên-kho" spellcheck="false" autocomplete="off"></div>
+    <details><summary>Kho riêng tư: nhập mã truy cập chỉ đọc (không cần nếu kho công khai)</summary>
+      <div class="row" style="margin-top:8px"><input type="password" id="updToken" placeholder="mã truy cập GitHub chỉ đọc" autocomplete="off" style="flex:1 1 320px;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)"><span class="muted small" id="tokState"></span></div>
+      <div class="muted small" style="margin-top:4px">Mã được lưu nguyên văn (không mã hóa) trong config\settings.json trên máy này. Chỉ nên dùng mã chỉ đọc cho đúng kho này.</div>
+    </details>
+    <div class="row"><button class="btn ghost" id="btnUpdCheck">Kiểm tra bản mới</button><button class="btn" id="btnUpdApply" disabled>Cập nhật ngay</button></div>
+    <div id="updMsg" aria-live="polite"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h1s">
+    <h2 id="h1s">Bước 1 · Chọn hóa đơn</h2>
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Chọn hoặc thả file hóa đơn Excel">
+      <b>Kéo thả 1 file hóa đơn Excel (.xlsx hoặc .xls) vào đây</b>
+      <span class="muted">hoặc bấm để chọn file. Mỗi lần làm 1 hóa đơn; xong thì bấm Làm mới để đổi hóa đơn khác. File gốc không bị sửa.</span>
+      <input type="file" id="pick" accept=".xlsx,.xlsm,.xls" hidden>
+    </div>
+    <div class="bar hidden" id="fileBar"><div><b id="fileName"></b> <span class="muted" id="fileSub"></span></div></div>
+  </section>
+
+  <section class="card hidden" id="preview" aria-labelledby="h2s">
+    <h2 id="h2s">Bước 2 · Xem trước</h2>
+    <div id="previewBody" class="card" style="border:0;padding:0"></div>
+  </section>
+
+  <section class="card hidden" id="export" aria-labelledby="h3s">
+    <h2 id="h3s">Bước 3 · Xuất file Excel nhập hàng</h2>
+    <div class="row">
+      <input type="text" id="dir" aria-label="Thư mục lưu file" spellcheck="false">
+      <button class="btn ghost" id="btnPick">Chọn thư mục…</button>
+    </div>
+    <label class="chk hidden" id="confirmBox"><input type="checkbox" id="confirm"><span>Tôi đã xem các cảnh báo ở trên và đồng ý xuất file này.</span></label>
+    <div class="row"><button class="btn big" id="btnExport">Xuất file Excel</button><span class="muted" id="exportName"></span></div>
+    <div id="result"></div>
+  </section>
+
+  <footer class="foot">Ứng dụng được thiết kế và phát triển bởi Gia Khánh Motor. Chỉ sử dụng nội bộ, vui lòng không sao chép dưới mọi hình thức</footer>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const nf=new Intl.NumberFormat("vi-VN",{maximumFractionDigits:4});
+const state={f:null,cfg:null,filter:"all"};
+const H={"X-GKM":"1"};
+
+async function api(path,opt={}){
+  const r=await fetch(path,{...opt,headers:{...(opt.headers||{}),...H}});
+  let j=null;try{j=await r.json()}catch(e){}
+  if(!j)throw new Error("Không kết nối được với ứng dụng. Hãy mở lại GKM_NhapHoaDon.exe.");
+  return j;
+}
+const post=(p,b)=>api(p,{method:"POST",body:JSON.stringify(b||{})});
+
+async function init(){
+  try{
+    const c=await api("/api/config");state.cfg=c;
+    $("ver").textContent="Phiên bản "+c.version;
+    $("dir").value=c.outputDir;
+    if(!c.rootExists)banner("Không tìm thấy thư mục dự án "+c.root+". Có thể ổ chứa dự án chưa cắm. App vẫn chạy, nhưng hãy chọn thư mục xuất bằng nút \"Chọn thư mục…\". App không tự lưu sang ổ C.");
+    if(c.os!=="windows")$("btnPick").classList.add("hidden");
+    $("updRepo").value=c.updateRepo||"";
+    $("tokState").textContent=c.hasUpdateToken?"Đã lưu mã":"";
+    if(c.updateRepo)updCheck(true); // kiểm tra âm thầm khi mở app; lỗi mạng thì bỏ qua
+  }catch(e){banner(e.message)}
+  setInterval(()=>fetch("/api/ping").catch(()=>{}),3000);
+  fetch("/api/ping").catch(()=>{});
+  addEventListener("pagehide",()=>{try{navigator.sendBeacon("/api/closing","")}catch(e){}});
+}
+function banner(t){const b=$("banner");if(!t){b.classList.add("hidden");return}b.textContent=t;b.classList.remove("hidden")}
+
+/* ---- Cập nhật online ---- */
+function updMsg(cls,t){$("updMsg").innerHTML=t?'<div class="box '+cls+'">'+t+'</div>':""}
+$("btnUpd").addEventListener("click",()=>$("updPanel").classList.toggle("hidden"));
+async function saveUpdCfg(){
+  const body={updateRepo:$("updRepo").value.trim()};
+  if($("updToken").value.trim())body.updateToken=$("updToken").value.trim();
+  const c=await post("/api/config",body);
+  if(!c.ok)throw new Error(c.error);
+  $("updToken").value="";$("tokState").textContent=c.hasUpdateToken?"Đã lưu mã":"";
+  state.cfg=c;
+}
+async function updCheck(silent){
+  $("btnUpdApply").disabled=true;
+  try{
+    if(!silent)await saveUpdCfg();
+    updMsg("","");if(!silent)updMsg("ok","Đang kiểm tra…");
+    const j=await api("/api/update/check");
+    if(!j.ok){if(!silent)updMsg("bad",esc(j.error));return}
+    if(j.newer){
+      updMsg("warn","Có bản mới <b>"+esc(j.latest)+"</b> (đang dùng "+esc(j.current)+")."+(j.notes?"<br>"+esc(j.notes):""));
+      $("btnUpdApply").disabled=false;
+      if(silent){banner("Có bản mới "+j.latest+" của ứng dụng. Bấm \"Cập nhật\" ở góc trên để cài.");}
+    }else if(!silent)updMsg("ok","Đang dùng bản mới nhất ("+esc(j.current)+").");
+  }catch(e){if(!silent)updMsg("bad",esc(e.message))}
+}
+$("btnUpdCheck").addEventListener("click",()=>updCheck(false));
+$("btnUpdApply").addEventListener("click",async()=>{
+  if(state.f&&state.f.status==="ok"&&!state.f.done&&!confirm("Hóa đơn đang mở chưa được xuất file và sẽ bị bỏ khi app khởi động lại. Vẫn cập nhật?"))return;
+  $("btnUpdApply").disabled=true;$("btnUpdCheck").disabled=true;
+  updMsg("ok","Đang tải và kiểm tra bản mới, vui lòng không đóng cửa sổ…");
+  try{
+    const old=state.cfg.version;
+    const j=await post("/api/update/apply");
+    if(!j.ok){updMsg("bad",esc(j.error));$("btnUpdCheck").disabled=false;return}
+    updMsg("ok","Đã cài bản "+esc(j.version)+". Ứng dụng đang khởi động lại…");
+    for(let i=0;i<60;i++){
+      await new Promise(r=>setTimeout(r,1000));
+      try{const p=await (await fetch("/api/ping",{cache:"no-store"})).json();if(p.version&&p.version!==old){location.reload();return}}catch(e){}
+    }
+    updMsg("bad","Chưa thấy app mở lại. Hãy đóng cửa sổ này và mở lại GKM_NhapHoaDon.exe (đã là bản mới).");
+  }catch(e){updMsg("bad",esc(e.message));$("btnUpdCheck").disabled=false}
+});
+
+/* ---- Làm mới ---- */
+$("btnReset").addEventListener("click",async()=>{
+  const f=state.f;
+  if(f&&f.status==="ok"&&!f.done&&!confirm("Hóa đơn này chưa được xuất file. Làm mới sẽ bỏ hóa đơn đang mở. Tiếp tục?"))return;
+  try{await post("/api/reset")}catch(e){banner(e.message);return}
+  state.f=null;state.filter="all";banner("");$("pick").value="";render();
+});
+
+/* ---- chọn / thả file (chỉ 1 hóa đơn) ---- */
+const drop=$("drop");
+drop.addEventListener("click",()=>$("pick").click());
+drop.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();$("pick").click()}});
+$("pick").addEventListener("change",e=>{handle(e.target.files);e.target.value=""});
+["dragenter","dragover"].forEach(ev=>addEventListener(ev,e=>{e.preventDefault();if(!state.f)drop.classList.add("over")}));
+["dragleave","drop"].forEach(ev=>addEventListener(ev,e=>{e.preventDefault();if(ev==="drop"||e.target===document||e.relatedTarget===null)drop.classList.remove("over")}));
+addEventListener("drop",e=>{if(e.dataTransfer&&e.dataTransfer.files.length)handle(e.dataTransfer.files)});
+
+async function handle(list){
+  list=Array.from(list);if(!list.length)return;
+  if(state.f){banner("Đang mở 1 hóa đơn. Hãy bấm \"Làm mới\" trước khi chọn hóa đơn khác.");return}
+  const f=list[0];
+  banner(list.length>1?"Mỗi lần chỉ làm 1 hóa đơn nên app lấy file đầu tiên: "+f.name+". Xong thì bấm Làm mới để làm file tiếp theo.":"");
+  const item={name:f.name,status:"loading",resp:null,done:null,confirm:false};
+  state.f=item;state.filter="all";render();
+  const fd=new FormData();fd.append("file",f,f.name);
+  try{item.resp=await api("/api/convert",{method:"POST",body:fd});item.status=item.resp.ok?"ok":"err"}
+  catch(e){item.resp={error:e.message};item.status="err"}
+  render();
+}
+
+/* ---- hiển thị ---- */
+function render(){
+  const f=state.f;
+  $("drop").classList.toggle("hidden",!!f);
+  $("fileBar").classList.toggle("hidden",!f);
+  $("preview").classList.toggle("hidden",!f);
+  $("export").classList.toggle("hidden",!f||f.status!=="ok");
+  if(!f){$("result").innerHTML="";return}
+  const r=f.resp;
+  $("fileName").textContent=f.name;
+  $("fileSub").textContent=f.status==="loading"?"· đang đọc…":f.status==="err"?"· không đọc được":("· "+({xlsx:"Excel .xlsx",xls:"Excel .xls (cũ)",xml2003:"Excel XML",html:"Excel dạng HTML"}[r.format]||r.format)+" · "+r.rows+" dòng"+(f.done?" · đã xuất":""));
+  const pb=$("previewBody");
+  if(f.status==="loading"){pb.innerHTML='<span class="muted">Đang đọc hóa đơn…</span>';return}
+  if(f.status==="err"){pb.innerHTML='<div class="box bad"><b>Không chuyển đổi được hóa đơn này.</b><br>'+esc(r.error)+'<br><span class="muted">Bấm Làm mới để chọn hóa đơn khác.</span></div>';return}
+  let h='<div class="stats"><div><b>'+r.rows+'</b><span>dòng sản phẩm</span></div><div><b>'+r.normal+'</b><span>hàng thường</span></div><div><b>'+r.promo+'</b><span>hàng khuyến mại</span></div><div><b>'+r.exchange+'</b><span>hàng đổi/bảo hành (giá 0)</span></div><div><b>'+r.excluded+'</b><span>dòng bỏ (không có số lượng)</span></div></div>';
+  h+='<div class="row"><span class="pill '+(r.known?"ok":"warn")+'">'+(r.known?"Đã nhận biết mẫu":"Mẫu mới, cần kiểm tra")+'</span><span>'+esc(r.profileName)+'</span></div>';
+  h+='<div class="muted">Số phiếu: <b>'+esc(r.so||"không có")+'</b> · Ngày: <b>'+esc(r.ngay||"không có")+'</b> · File chuyển đổi: <span class="path">'+esc(r.suggestedName)+'</span></div>';
+  if(r.scaleNote)h+='<div class="muted">Đơn giá được hiểu là <b>nghìn đồng</b> (nhân 1.000) vì hóa đơn ghi: <i>'+esc(r.scaleNote)+'</i></div>';
+  if(r.errors.length)h+='<div class="box bad"><b>Lỗi cần sửa trong hóa đơn gốc trước khi xuất:</b><ul class="list">'+r.errors.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>';
+  if(r.warnings.length)h+='<div class="box warn"><b>Cảnh báo:</b><ul class="list">'+r.warnings.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>';
+  h+='<div><h2>Đối chiếu với hóa đơn</h2><ul class="list" style="margin-top:6px">'+r.checks.map(c=>'<li><span class="pill '+(c.level==="ok"?"ok":c.level==="warn"?"warn":"bad")+'">'+(c.level==="ok"?"Khớp":"Lưu ý")+'</span><span>'+esc(c.name)+': <span class="muted">'+esc(c.detail)+'</span></span></li>').join("")+'</ul></div>';
+  h+='<div class="filters" role="group" aria-label="Lọc dòng">'+[["all","Tất cả"],["thuong","Hàng thường"],["km","Khuyến mại"],["doi","Hàng đổi"]].map(([k,l])=>'<button class="fbtn" data-f="'+k+'" aria-pressed="'+(state.filter===k)+'">'+l+'</button>').join("")+'</div>';
+  h+='<div class="tw"><table><thead><tr><th>#</th><th>Mã hàng</th><th>Tên hàng</th><th class="r">Đơn giá (đ)</th><th class="r">Giảm giá (%)</th><th class="r">Số lượng</th><th>Loại</th></tr></thead><tbody>';
+  r.items.forEach(it=>{
+    if(state.filter!=="all"&&it.kind!==state.filter)return;
+    h+='<tr class="'+(it.kind==="km"||it.kind==="doi"?"km":"")+'"><td class="num muted">'+it.n+'</td><td class="num">'+esc(it.code)+'</td><td>'+esc(it.name)+'</td><td class="r num">'+nf.format(it.price)+'</td><td class="r num">'+esc(it.ck)+'</td><td class="r num">'+esc(it.qty)+'</td><td>'+(it.kind==="km"?'<span class="pill km">Khuyến mại</span>':it.kind==="doi"?'<span class="pill km">Hàng đổi, giá 0</span>':'')+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  if(r.excludedItems.length){
+    h+='<details><summary>'+r.excludedItems.length+' dòng không có số lượng nên bỏ, không nhập vào file</summary><div class="tw" style="margin-top:8px"><table><thead><tr><th>STT</th><th>Mã hàng</th><th>Tên hàng</th><th class="r">Đơn giá (đ)</th></tr></thead><tbody>'+r.excludedItems.map(it=>'<tr class="loai"><td class="num">'+esc(it.stt)+'</td><td class="num">'+esc(it.code)+'</td><td>'+esc(it.name)+'</td><td class="r num">'+(it.price?nf.format(it.price):"")+'</td></tr>').join("")+'</tbody></table></div></details>';
+  }
+  pb.innerHTML=h;
+  pb.querySelectorAll(".fbtn").forEach(b=>b.onclick=()=>{state.filter=b.dataset.f;render()});
+  // phần xuất
+  const blocked=r.errors.length>0;
+  $("confirmBox").classList.toggle("hidden",!r.needConfirm||blocked);
+  $("confirm").checked=!!f.confirm;
+  $("exportName").textContent="Tên file: "+r.suggestedName;
+  updateExportBtn();
+  const res=$("result");
+  if(f.done){
+    res.innerHTML='<div class="box ok"><b>Đã xuất xong, đã mở lại file và kiểm tra: đạt ('+f.done.rows+' dòng).</b><br><span class="path">'+esc(f.done.path)+'</span>'+(f.done.warning?'<br><b>'+esc(f.done.warning)+'</b>':'')+'<div class="row" style="margin-top:8px"><button class="btn ghost" id="btnOpen">Mở thư mục chứa file</button></div></div>';
+    const bo=$("btnOpen");if(state.cfg&&state.cfg.os!=="windows")bo.classList.add("hidden");
+    bo.onclick=async()=>{const j=await post("/api/openfolder",{path:f.done.path});if(!j.ok)banner(j.error)};
+  }else if(f.error){res.innerHTML='<div class="box bad">'+esc(f.error)+'</div>'}
+  else res.innerHTML="";
+}
+function updateExportBtn(){
+  const f=state.f;if(!f||f.status!=="ok")return;
+  const r=f.resp,blocked=r.errors.length>0;
+  $("btnExport").disabled=blocked||(r.needConfirm&&!$("confirm").checked)||f.busy||!!f.done;
+  $("btnExport").title=f.done?"Đã xuất. Bấm Làm mới để làm hóa đơn khác":blocked?"Hóa đơn còn lỗi dữ liệu":(r.needConfirm&&!$("confirm").checked?"Cần tích xác nhận":"");
+}
+$("confirm").addEventListener("change",()=>{const f=state.f;if(f)f.confirm=$("confirm").checked;updateExportBtn()});
+
+$("btnPick").addEventListener("click",async()=>{
+  const j=await post("/api/pickfolder",{initial:$("dir").value});
+  if(j.ok&&j.dir)$("dir").value=j.dir;else if(!j.ok)banner(j.error);
+});
+$("btnExport").addEventListener("click",async()=>{
+  const f=state.f;if(!f||f.status!=="ok")return;
+  f.busy=true;f.error=null;updateExportBtn();
+  try{
+    const j=await post("/api/export",{id:f.resp.id,dir:$("dir").value,confirm:$("confirm").checked});
+    if(j.ok)f.done=j;else f.error=j.error;
+  }catch(e){f.error=e.message}
+  f.busy=false;render();
+});
+
+init();
+</script>
+</body>
+</html>

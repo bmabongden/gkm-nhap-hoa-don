@@ -1,0 +1,16 @@
+# cache và file tạm khi build
+build/gocache/
+build/gopath/
+build/tmp/
+# dữ liệu chạy trên máy (không đưa lên kho)
+logs/*
+!logs/.gitkeep
+output/*
+!output/.gitkeep
+config/settings.json
+config/browser-profile/
+*.new
+*.old
+# hóa đơn mẫu thật của nhà cung cấp: không đưa lên kho công khai
+samples/*
+!samples/README.txt
