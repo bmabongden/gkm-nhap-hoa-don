@@ -20,6 +20,7 @@ import (
 type noPlat struct{}
 
 func (noPlat) PickFolder(string) (string, error) { return "", nil }
+func (noPlat) PickFile(string) (string, error)   { return "", nil }
 func (noPlat) OpenFolder(string) error           { return nil }
 
 func newApp(t *testing.T) *App {

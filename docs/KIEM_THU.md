@@ -1,6 +1,6 @@
-# Kết quả kiểm thử app GKM - Nhập Hóa Đơn 1.6.0 (bản chính thức, sửa 22/10/2026)
+# Kết quả kiểm thử app GKM - Nhập Hóa Đơn 1.7.0 (bản chính thức, sửa 29/10/2026)
 
-File: `app/GKM_NhapHoaDon.exe`, PE32+ GUI x86-64 build bằng Go (cross-compile từ Linux), 11,9 MB (11.898.880 byte), SHA-256 `63f18e1e889095c70cc8cd2cdc856948002886986f74fe35022802ce15cb50fc` (build lại cho ra đúng mã này).
+File: `app/GKM_NhapHoaDon.exe`, PE32+ GUI x86-64 build bằng Go (cross-compile từ Linux), 11,9 MB (11.898.880 byte), SHA-256 `51131e404c4bf2a05302f3269034bac878b7dcdaad43f277fa9ccb0d04f5b77a` (build lại cho ra đúng mã này).
 Khiêm yêu cầu chốt app ngày 02/10/2026. Chức năng gửi Telegram (1.3.x) đã gỡ hẳn theo yêu cầu của Khiêm; app chỉ còn đọc hóa đơn, xem trước và xuất file.
 
 ## Thay đổi so với 1.0.0 (4 yêu cầu của Khiêm)
@@ -10,7 +10,7 @@ Khiêm yêu cầu chốt app ngày 02/10/2026. Chức năng gửi Telegram (1.3.
 4. Đơn vị đơn giá tự xác định (không có ô chọn): đồng, trừ Tân Hòa Lợi (luôn nghìn đồng) hoặc hóa đơn có ghi chú rõ nghìn đồng; hóa đơn không có cột tên thì cột Tên hàng để trống (Khiêm xác nhận).
 5. Đã bỏ các chức năng từng thử: tự nhập KiotViet, gửi Zalo Web, gửi Telegram (Khiêm yêu cầu bỏ).
 6. (Bản 1.5.0, 04/10/2026) Dòng chỉ có số lượng vẫn nhập với giá 0 (kể cả hàng đổi/bảo hành), dòng có giá không có số lượng bị bỏ; sửa nút "Mở thư mục chứa file"; thêm dòng bản quyền nội bộ ở cuối ứng dụng; logo mới (biểu tượng .exe, cửa sổ, đầu trang).
-7. (Bản 1.6.0, 22/10/2026) Đọc được phiếu xuất kho kiêm giấy nhận nợ (SL LẤY thay SL ĐẶT, ĐƠN GIÁ BÁN thay ĐG ĐÃ CK, file gộp nhiều toa chỉ lấy bảng cuối, số lượng 0 thì bỏ dòng); thêm nút **Cập nhật** online qua kho GitHub; rà lỗi toàn app (xem "Lỗi tìm thấy khi rà soát").
+7. (Bản 1.7.0, 29/10/2026) Thư mục xuất mặc định là thư mục chứa file hóa đơn (hộp chọn file Windows; kéo thả thì dò theo tên + kích thước + ngày sửa). Bản 1.6.0 (22/10/2026): Đọc được phiếu xuất kho kiêm giấy nhận nợ (SL LẤY thay SL ĐẶT, ĐƠN GIÁ BÁN thay ĐG ĐÃ CK, file gộp nhiều toa chỉ lấy bảng cuối, số lượng 0 thì bỏ dòng); thêm nút **Cập nhật** online qua kho GitHub; rà lỗi toàn app (xem "Lỗi tìm thấy khi rà soát").
 
 ## Lỗi tìm thấy khi rà soát (22/10/2026) và đã sửa
 Chạy thử xáo trộn dữ liệu (xóa ô, thay bằng chữ/số lạ trong các hóa đơn mẫu, làm hỏng byte file .xls/.xlsx) và đọc lại mã tìm ra:
@@ -26,10 +26,11 @@ Không dùng ChatGPT: phiên làm việc này không có đường gọi dịch 
 ## Đã kiểm chứng thực tế
 | Hạng mục | Cách làm | Kết quả |
 |---|---|---|
-| Toàn bộ kiểm thử Go (1.6.0) | `go test ./internal/... ./cmd/...`: 30 bài kiểm thử, 0 lỗi (lõi, máy chủ giao diện, cập nhật) | Đạt |
+| Toàn bộ kiểm thử Go (1.6.0) | `go test ./internal/... ./cmd/...`: 34 bài kiểm thử, 0 lỗi (lõi, máy chủ giao diện, cập nhật) | Đạt |
 | Mẫu 6 phiếu xuất kho (22/10) | `go test` và `--selftest`: 35 dòng (38 dòng hàng, 3 dòng SL LẤY = 0 bị bỏ), tổng tiền hàng 12.700.802,16 và tổng SL lấy 103 khớp, "Tổng phải thu 9.907.000" hiện để tham khảo; bài thử bảng xếp chồng, mỗi toa một sheet, tiêu đề lặp trang | Đạt |
 | Xáo trộn dữ liệu | 300 hóa đơn mẫu bị xóa/đổi ô ngẫu nhiên (hạt giống cố định) và 60 file hỏng byte: không panic, không treo; file xuất luôn qua `VerifyExport` | Đạt |
 | Cập nhật online (giả lập) | `go test`: máy chủ GitHub giả; so sánh phiên bản; thiếu kho/kho sai; kho riêng tư cần mã (404 không mã, đạt khi có mã, mã gửi trong tiêu đề Authorization); latest.json hỏng; SHA-256 sai, kích thước sai, không phải .exe, chạy thử lỗi (đều bị từ chối và xóa file tải, file đang chạy không bị đụng); thay file thành công giữ `.old`; khôi phục khi lỗi giữa chừng; endpoint kiểm tra/cài; app tự thoát để mở lại sau khi cài; chặn Host/Origin lạ | Đạt |
+| Thư mục xuất theo file hóa đơn (1.7.0) | `go test`: chọn file bằng đường dẫn trả đúng thư mục và nhớ lại; từ chối đuôi lạ/đường dẫn tương đối/file không có; dò file kéo thả (trùng tên không phân biệt hoa thường, sai kích thước hoặc ngày sửa thì không thấy, hai nơi trùng thì không đoán, quá sâu bỏ qua); giao diện Linux + Chromium: chọn file ra thư mục Tải xuống, xuất file vào đó, không tìm thấy thì quay về thư mục xuất lần trước; Wine `--selftest` 11/11 | Đạt (hộp chọn file Windows thật CHƯA thử) |
 | Giao diện 1.6.0 | App bản Linux + Chromium: thả Mẫu 6 ra 35 dòng, xuất đạt; panel Cập nhật: báo thiếu kho, từ chối tên kho sai, lưu kho + mã (mã không hiện lại), báo lỗi GitHub dễ hiểu; không lỗi trình duyệt | Đạt |
 | Chạy chính file .exe (1.6.0) | Wine: `--version` ra 1.6.0; `--selftest` đạt 11/11 mục khi gồm Mẫu 6 | Đạt |
 | Lõi chuyển đổi | `go test ./internal/core/`: 3 mẫu gốc so từng ô, Mẫu 4, Mẫu 5, bản .xls/XML/HTML, file .xls 3000 dòng (qua nhiều đoạn CONTINUE) | Đạt |
@@ -53,6 +54,7 @@ Không dùng ChatGPT: phiên làm việc này không có đường gọi dịch 
 Giới hạn của phép thử: Mẫu 4 và 5 **chưa có kết quả mẫu** để so từng ô nên chỉ kiểm tra "đọc đúng, tổng khớp, xuất file đạt". Các bản .xls/XML/HTML của Mẫu 1-4 do công cụ Python (xlwt) tạo từ file gốc, không phải do Excel lưu; riêng `gk 28-2.xls` là file Excel thật. LibreOffice trong môi trường này không mở được bảng tính nên không dùng để tạo bản .xls.
 
 ## CHƯA kiểm chứng (cần thử trên máy Windows thật)
+- **Hộp chọn file của Windows (1.7.0)** chạy bằng PowerShell giống hộp chọn thư mục; mới biên dịch và thử logic bằng bản Linux giả lập, chưa bấm trên Windows thật. Nếu hộp không mở, app tự quay về cách chọn file của trình duyệt (khi đó thư mục xuất dò theo tên file).
 - **Cập nhật online chưa chạy với GitHub thật**: môi trường làm việc không gọi được GitHub API (gọi thử qua proxy của môi trường trả lỗi 403), nên mới thử với máy chủ giả mô phỏng đúng giao diện `contents` của GitHub. Lần đầu dùng thật: tạo kho, đẩy `update/`, mở app bản cũ, bấm Cập nhật. Việc đổi tên file `.exe` đang chạy rồi mở lại bản mới trên Windows thật cũng chưa thử (Windows cho phép đổi tên file đang chạy; Wine không phản ánh đủ).
 - Mẫu 6 chưa có kết quả mẫu để so từng ô; bảng cuối là hóa đơn ngày 20/10/2026, các toa trước trong file bị bỏ theo yêu cầu.
 - Chưa chạy trên Windows thật, chỉ chạy bằng Wine. Cần chạy `app\KiemTraMau.bat` trên máy Windows.

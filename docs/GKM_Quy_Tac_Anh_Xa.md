@@ -134,3 +134,11 @@ Nguồn bằng chứng: `samples/Mau 6 - Phieu xuat kho SL lay.xlsx` (Khiêm g�
 - **Giá trị vô lý**: số lượng ≥ 1 tỷ hoặc đơn giá ≥ 1.000 tỷ báo lỗi (chặn xuất); số lượng > 100.000 chỉ cảnh báo. Sheet quá 50.000 dòng hoặc 200 cột bị từ chối (file hỏng).
 - **Cập nhật online**: nút "Cập nhật" trong app đọc `update/latest.json` và `update/GKM_NhapHoaDon.exe` trong một kho GitHub, kiểm tra SHA-256/kích thước/MZ/`-version`, thay file, tự mở lại. Chi tiết trong `HUONG_DAN.md` mục 4. Không dùng ChatGPT hay dịch vụ AI nào trong app (Khiêm làm rõ 22/10/2026: ChatGPT chỉ dùng để rà lỗi mã nguồn, không phải nút trong app).
 - **Thư mục dự án (22/10/2026)**: máy của Khiêm không có ổ E, app cũ nằm ở `D:\Data AI\App nhap hang\Chuan\GKM_HoaDonNhapHang`. Từ 1.6.0 app tự lấy thư mục cha của `app\` (nơi chứa .exe) làm thư mục dự án; chỉ khi không nằm trong `app\` mới dùng mặc định `E:\GKM_HoaDonNhapHang` (hoặc `--root`, biến `GKM_ROOT`).
+
+## 12. Cập nhật 29/10/2026: thư mục xuất mặc định theo file hóa đơn (app 1.7.0)
+
+Khiêm yêu cầu: ở mục xuất file, tự chọn vị trí là nơi file hóa đơn đã chọn, không để thư mục app chọn sẵn.
+- Bấm khung Bước 1 trên Windows mở hộp chọn file của Windows; app đọc file thẳng từ đường dẫn đó và đặt **thư mục xuất mặc định = thư mục chứa file** (vẫn sửa được). Hộp chọn mở ở thư mục hóa đơn lần trước.
+- Kéo thả: trình duyệt không cho biết đường dẫn, nên app dò Tải xuống, Desktop, Documents, Tài liệu, Zalo Received Files (cả trong OneDrive) và thư mục dự án, sâu tối đa 3 cấp, tìm đúng một file trùng tên + kích thước + ngày sửa; nếu có đúng một nơi thì dùng, nhiều nơi hoặc không thấy thì dùng thư mục xuất lần trước và hiện ghi chú.
+- Thư mục xuất vẫn được lưu lại sau mỗi lần xuất. File hóa đơn gốc không bị sửa; tên file xuất đã tồn tại thì thêm `_2`, `_3`.
+

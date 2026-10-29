@@ -24,6 +24,9 @@ func newPlatform(string) devPlatform { return devPlatform{} }
 func (devPlatform) PickFolder(string) (string, error) {
 	return "", fmt.Errorf("chức năng chọn thư mục chỉ có trên Windows; hãy gõ đường dẫn")
 }
+func (devPlatform) PickFile(string) (string, error) {
+	return "", fmt.Errorf("chức năng chọn file chỉ có trên Windows")
+}
 func (devPlatform) OpenFolder(string) error { return fmt.Errorf("chỉ có trên Windows") }
 
 func openWindow(root, url string, noBrowser bool) { fmt.Println(url) }

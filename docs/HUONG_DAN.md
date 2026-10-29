@@ -1,4 +1,4 @@
-# GKM - Nhập Hóa Đơn 1.6.0: hướng dẫn ngắn
+# GKM - Nhập Hóa Đơn 1.7.0: hướng dẫn ngắn
 
 Ứng dụng Windows độc lập (portable): **không cần Python, API, khóa/token**; xử lý hóa đơn chạy hoàn toàn trên máy, chỉ nút **Cập nhật** mới dùng Internet. Mọi thứ nằm trong thư mục dự án (trong tài liệu này ghi `E:\GKM_HoaDonNhapHang` làm ví dụ; thư mục thật là nơi anh chép dự án, ví dụ `D:\Data AI\App nhap hang\Chuan\GKM_HoaDonNhapHang`).
 
@@ -9,9 +9,9 @@
 
 ## 2. Dùng hằng ngày
 1. Bấm đúp `E:\GKM_HoaDonNhapHang\app\GKM_NhapHoaDon.exe`. Một cửa sổ "GKM - Nhập Hóa Đơn" mở ra (dùng Microsoft Edge hoặc Chrome có sẵn trên máy; dữ liệu hóa đơn chỉ chạy trên máy bạn).
-2. **Bước 1**: kéo thả **1** file hóa đơn Excel (`.xlsx` hoặc `.xls`) vào khung (hoặc bấm để chọn). Mỗi lần chỉ làm một hóa đơn.
+2. **Bước 1**: bấm vào khung để chọn **1** file hóa đơn Excel (`.xlsx` hoặc `.xls`) bằng hộp thoại của Windows, hoặc kéo thả file vào khung. Mỗi lần chỉ làm một hóa đơn.
 3. **Bước 2 - Xem trước**: kiểm tra số dòng, hàng thường/khuyến mại, mục đối chiếu với tổng hóa đơn, cảnh báo và bảng dòng hàng. Dòng khuyến mại tô vàng. Hàng đổi/bảo hành (chỉ có số lượng) vẫn nhập với đơn giá 0 và có nhãn riêng; dòng có giá mà không có số lượng bị bỏ, nằm trong mục xổ xuống bên dưới. App **tự xác định đơn vị đơn giá**: mặc định là đồng; hóa đơn Tân Hòa Lợi và hóa đơn có ghi chú tính theo nghìn đồng (ví dụ "Đơn vị tính: nghìn đồng", "Đơn giá (1000đ)") thì app tự nhân 1.000 và ghi rõ lý do trên màn hình. Hóa đơn không có cột tên hàng thì cột Tên hàng để trống.
-4. **Bước 3 - Xuất**: thư mục mặc định là `E:\GKM_HoaDonNhapHang\output` (đổi bằng ô đường dẫn hoặc nút **Chọn thư mục…**). Nếu có cảnh báo, đọc rồi tích ô xác nhận. Bấm **Xuất file Excel**. File tên `NhapHang_<số phiếu>_<ngày>.xlsx`. App tự mở lại file vừa xuất để kiểm tra rồi mới báo đạt.
+4. **Bước 3 - Xuất**: thư mục lưu mặc định là **thư mục chứa file hóa đơn vừa chọn** (đổi bằng ô đường dẫn hoặc nút **Chọn thư mục…**). Chọn file bằng hộp thoại thì app biết chắc thư mục. Kéo thả thì trình duyệt không cho biết file nằm ở đâu, nên app tự tìm file theo tên, kích thước và ngày sửa trong Tải xuống, Desktop, Documents, OneDrive, Zalo Received Files và thư mục dự án; tìm được thì dùng thư mục đó (có ghi chú "app tìm thấy file theo tên và kích thước"), không chắc thì dùng thư mục xuất lần trước. Muốn chắc chắn thì chọn file bằng hộp thoại. Nếu có cảnh báo, đọc rồi tích ô xác nhận. Bấm **Xuất file Excel**. File tên `NhapHang_<số phiếu>_<ngày>.xlsx`. App tự mở lại file vừa xuất để kiểm tra rồi mới báo đạt.
 5. **Làm mới**: xong hóa đơn này thì bấm nút **Làm mới** (góc trên bên phải, cạnh nút **Cập nhật**) để xóa hóa đơn cũ, rồi chọn hóa đơn khác. Chưa bấm Làm mới thì app không nhận hóa đơn thứ hai. File đã xuất không bị xóa.
 6. Đóng cửa sổ là app tự thoát.
 

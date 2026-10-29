@@ -17,6 +17,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -31,6 +32,7 @@ var indexHTML []byte
 // Platform gom các chức năng riêng của hệ điều hành (chọn thư mục, mở thư mục).
 type Platform interface {
 	PickFolder(initial string) (string, error)
+	PickFile(initial string) (string, error)
 	OpenFolder(path string) error
 }
 
@@ -106,6 +108,10 @@ type ConvertResp struct {
 	Scale         float64      `json:"scale"`
 	HasName       bool         `json:"hasName"`
 	ScaleNote     string       `json:"scaleNote"`
+	// SrcDir là thư mục chứa file hóa đơn (mặc định cho thư mục xuất); SrcExact=true khi chắc chắn (chọn bằng hộp thoại),
+	// false khi app đoán từ tên và kích thước file kéo thả; SrcDir rỗng khi không xác định được.
+	SrcDir   string `json:"srcDir"`
+	SrcExact bool   `json:"srcExact"`
 }
 
 func New(version string, template []byte, root string, pl Platform, lg *log.Logger) *App {
@@ -127,6 +133,7 @@ type settings struct {
 	OutputDir   string `json:"outputDir"`
 	UpdateRepo  string `json:"updateRepo,omitempty"`  // kho GitHub chứa bản cập nhật, dạng tên-tài-khoản/tên-kho
 	UpdateToken string `json:"updateToken,omitempty"` // mã truy cập chỉ đọc, chỉ cần khi kho riêng tư
+	LastSrcDir  string `json:"lastSrcDir,omitempty"`  // thư mục của file hóa đơn chọn lần trước (mở hộp chọn file ở đây)
 }
 
 func (a *App) loadSettings() settings {
@@ -221,6 +228,7 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("/api/export", a.handleExport)
 	mux.HandleFunc("/api/reset", a.handleReset)
 	mux.HandleFunc("/api/pickfolder", a.handlePick)
+	mux.HandleFunc("/api/pickfile", a.handlePickFile)
 	mux.HandleFunc("/api/openfolder", a.handleOpen)
 	return a.guard(mux)
 }
@@ -436,17 +444,38 @@ func (a *App) handleConvert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.MultipartForm.RemoveAll() // xóa file tạm nếu form lớn phải ghi ra đĩa
-	f, hdr, err := r.FormFile("file")
-	if err != nil {
-		fail(w, 400, "Chưa chọn file.")
-		return
-	}
-	defer f.Close()
-	name := filepath.Base(hdr.Filename)
-	data, err := io.ReadAll(f)
-	if err != nil {
-		fail(w, 400, "Không đọc được file.")
-		return
+	var name, srcDir string
+	var srcExact bool
+	var data []byte
+	if p := strings.TrimSpace(r.FormValue("path")); p != "" {
+		// file do hộp thoại chọn file của Windows trả về: đọc thẳng từ đĩa, biết chắc thư mục chứa file
+		var msg string
+		name, data, msg = a.readLocal(p)
+		if msg != "" {
+			fail(w, 400, msg)
+			return
+		}
+		srcDir, srcExact = filepath.Dir(filepath.Clean(p)), true
+	} else {
+		f, hdr, err := r.FormFile("file")
+		if err != nil {
+			fail(w, 400, "Chưa chọn file.")
+			return
+		}
+		defer f.Close()
+		name = filepath.Base(hdr.Filename)
+		data, err = io.ReadAll(f)
+		if err != nil {
+			fail(w, 400, "Không đọc được file.")
+			return
+		}
+		// kéo thả: trình duyệt không cho biết thư mục, nên dò theo tên + kích thước + ngày sửa
+		size, _ := strconv.ParseInt(r.FormValue("size"), 10, 64)
+		mtime, _ := strconv.ParseInt(r.FormValue("mtime"), 10, 64)
+		if size == 0 {
+			size = int64(len(data))
+		}
+		srcDir = locateSource(name, size, mtime, sourceRoots(a.Root))
 	}
 	g, kind, msg := readFile(name, data)
 	var resp *ConvertResp
@@ -456,6 +485,12 @@ func (a *App) handleConvert(w http.ResponseWriter, r *http.Request) {
 		resp = failResp(name, parseMsg(err))
 	} else {
 		resp = view(newID(), name, kind, p)
+		resp.SrcDir, resp.SrcExact = srcDir, srcExact
+		if srcDir != "" {
+			cur := a.loadSettings()
+			cur.LastSrcDir = srcDir
+			a.saveSettings(cur)
+		}
 		a.mu.Lock()
 		a.results = map[string]*entry{resp.ID: {name: name, format: kind, grid: g, parsed: p}} // chỉ giữ 1 hóa đơn
 		a.mu.Unlock()
@@ -583,6 +618,45 @@ func (a *App) handlePick(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, 200, map[string]any{"ok": true, "dir": dir})
+}
+
+// readLocal đọc file hóa đơn từ đường dẫn do hộp thoại chọn file trả về (chỉ nhận đuôi Excel, đúng giới hạn dung lượng).
+func (a *App) readLocal(p string) (name string, data []byte, msg string) {
+	p = filepath.Clean(p)
+	if !filepath.IsAbs(p) {
+		return "", nil, "Đường dẫn file không hợp lệ."
+	}
+	switch strings.ToLower(filepath.Ext(p)) {
+	case ".xlsx", ".xlsm", ".xls":
+	default:
+		return "", nil, "Chỉ nhận file Excel (.xlsx, .xlsm, .xls)."
+	}
+	fi, err := os.Stat(p)
+	if err != nil || !fi.Mode().IsRegular() {
+		return "", nil, "Không tìm thấy file đã chọn."
+	}
+	if fi.Size() > a.MaxUpload {
+		return "", nil, "File quá lớn."
+	}
+	data, err = os.ReadFile(p)
+	if err != nil {
+		return "", nil, "Không đọc được file đã chọn: " + err.Error()
+	}
+	return filepath.Base(p), data, ""
+}
+
+// handlePickFile mở hộp thoại chọn file hóa đơn của hệ điều hành (bắt đầu ở thư mục hóa đơn lần trước).
+func (a *App) handlePickFile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		fail(w, 405, "Sai phương thức.")
+		return
+	}
+	path, err := a.Platform.PickFile(a.loadSettings().LastSrcDir)
+	if err != nil {
+		fail(w, 501, err.Error())
+		return
+	}
+	writeJSON(w, 200, map[string]any{"ok": true, "path": path})
 }
 
 func (a *App) handleOpen(w http.ResponseWriter, r *http.Request) {

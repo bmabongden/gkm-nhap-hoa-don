@@ -113,6 +113,7 @@ details summary{cursor:pointer;color:var(--muted)}
       <input type="text" id="dir" aria-label="Thư mục lưu file" spellcheck="false">
       <button class="btn ghost" id="btnPick">Chọn thư mục…</button>
     </div>
+    <div class="muted small" id="dirNote"></div>
     <label class="chk hidden" id="confirmBox"><input type="checkbox" id="confirm"><span>Tôi đã xem các cảnh báo ở trên và đồng ý xuất file này.</span></label>
     <div class="row"><button class="btn big" id="btnExport">Xuất file Excel</button><span class="muted" id="exportName"></span></div>
     <div id="result"></div>
@@ -201,13 +202,23 @@ $("btnReset").addEventListener("click",async()=>{
   const f=state.f;
   if(f&&f.status==="ok"&&!f.done&&!confirm("Hóa đơn này chưa được xuất file. Làm mới sẽ bỏ hóa đơn đang mở. Tiếp tục?"))return;
   try{await post("/api/reset")}catch(e){banner(e.message);return}
-  state.f=null;state.filter="all";banner("");$("pick").value="";render();
+  state.f=null;state.filter="all";banner("");$("pick").value="";$("dirNote").textContent="";render();
 });
 
 /* ---- chọn / thả file (chỉ 1 hóa đơn) ---- */
 const drop=$("drop");
-drop.addEventListener("click",()=>$("pick").click());
-drop.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();$("pick").click()}});
+// Trên Windows dùng hộp chọn file của hệ điều hành để biết chắc file nằm ở thư mục nào (làm thư mục xuất mặc định).
+async function choose(){
+  if(state.cfg&&state.cfg.os==="windows"){
+    try{
+      const j=await post("/api/pickfile");
+      if(j.ok){if(j.path)runConvert(j.path.split(/[\\/]/).pop(),fd=>fd.append("path",j.path));return}
+    }catch(e){}
+  }
+  $("pick").click();
+}
+drop.addEventListener("click",choose);
+drop.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();choose()}});
 $("pick").addEventListener("change",e=>{handle(e.target.files);e.target.value=""});
 ["dragenter","dragover"].forEach(ev=>addEventListener(ev,e=>{e.preventDefault();if(!state.f)drop.classList.add("over")}));
 ["dragleave","drop"].forEach(ev=>addEventListener(ev,e=>{e.preventDefault();if(ev==="drop"||e.target===document||e.relatedTarget===null)drop.classList.remove("over")}));
@@ -218,11 +229,24 @@ async function handle(list){
   if(state.f){banner("Đang mở 1 hóa đơn. Hãy bấm \"Làm mới\" trước khi chọn hóa đơn khác.");return}
   const f=list[0];
   banner(list.length>1?"Mỗi lần chỉ làm 1 hóa đơn nên app lấy file đầu tiên: "+f.name+". Xong thì bấm Làm mới để làm file tiếp theo.":"");
-  const item={name:f.name,status:"loading",resp:null,done:null,confirm:false};
+  runConvert(f.name,fd=>{fd.append("file",f,f.name);fd.append("size",f.size);fd.append("mtime",f.lastModified)});
+}
+async function runConvert(name,fill){
+  if(state.f){banner("Đang mở 1 hóa đơn. Hãy bấm \"Làm mới\" trước khi chọn hóa đơn khác.");return}
+  const item={name:name,status:"loading",resp:null,done:null,confirm:false};
   state.f=item;state.filter="all";render();
-  const fd=new FormData();fd.append("file",f,f.name);
+  const fd=new FormData();fill(fd);
   try{item.resp=await api("/api/convert",{method:"POST",body:fd});item.status=item.resp.ok?"ok":"err"}
   catch(e){item.resp={error:e.message};item.status="err"}
+  if(item.status==="ok"){
+    // thư mục xuất mặc định = thư mục chứa file hóa đơn vừa chọn (vẫn sửa được)
+    const r=item.resp;
+    if(r.srcDir){$("dir").value=r.srcDir;$("dirNote").textContent=r.srcExact?"Mặc định: cùng thư mục với file hóa đơn.":"Mặc định: cùng thư mục với file hóa đơn (app tìm thấy file theo tên và kích thước; nếu sai hãy sửa lại).";}
+    else{
+      try{const c=await api("/api/config");if(c.outputDir)$("dir").value=c.outputDir}catch(e){}
+      $("dirNote").textContent="Không biết file hóa đơn nằm ở đâu (kéo thả không cho biết thư mục). Hãy kiểm tra thư mục lưu, hoặc bấm vào khung Bước 1 để chọn file bằng hộp thoại thì app tự lấy đúng thư mục.";
+    }
+  }
   render();
 }
 

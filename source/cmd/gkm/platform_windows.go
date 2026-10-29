@@ -49,7 +49,25 @@ func (winPlatform) PickFolder(initial string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("không mở được hộp chọn thư mục của Windows; hãy gõ đường dẫn vào ô thư mục: %v", err)
 	}
-	return strings.TrimSpace(string(out)), nil
+	return strings.TrimSpace(strings.TrimPrefix(string(out), "\ufeff")), nil
+}
+
+// PickFile mở hộp thoại chọn file hóa đơn Excel của Windows và trả đường dẫn đầy đủ (rỗng nếu người dùng bấm Hủy).
+func (winPlatform) PickFile(initial string) (string, error) {
+	script := `[Console]::OutputEncoding=[Text.Encoding]::UTF8;` +
+		`Add-Type -AssemblyName System.Windows.Forms;` +
+		`$f=New-Object System.Windows.Forms.Form;$f.TopMost=$true;$f.ShowInTaskbar=$false;$f.WindowState='Minimized';` +
+		`$d=New-Object System.Windows.Forms.OpenFileDialog;` +
+		`$d.Title='Chọn hóa đơn nhập hàng (Excel)';$d.Filter='Excel (*.xlsx;*.xlsm;*.xls)|*.xlsx;*.xlsm;*.xls|Tất cả file|*.*';$d.Multiselect=$false;` +
+		`if($env:GKM_INITIAL -and (Test-Path -LiteralPath $env:GKM_INITIAL)){$d.InitialDirectory=$env:GKM_INITIAL};` +
+		`$f.Show();$f.Hide();if($d.ShowDialog($f) -eq 'OK'){[Console]::Out.Write($d.FileName)}`
+	c := hide(exec.Command("powershell.exe", "-NoProfile", "-NonInteractive", "-STA", "-ExecutionPolicy", "Bypass", "-Command", script))
+	c.Env = append(os.Environ(), "GKM_INITIAL="+initial)
+	out, err := c.Output()
+	if err != nil {
+		return "", fmt.Errorf("không mở được hộp chọn file của Windows; hãy kéo thả file vào khung: %v", err)
+	}
+	return strings.TrimSpace(strings.TrimPrefix(string(out), "\ufeff")), nil
 }
 
 // OpenFolder mở thư mục chứa file (hoặc chính thư mục nếu path là thư mục) trong Explorer.
