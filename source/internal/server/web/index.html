@@ -181,7 +181,7 @@ async function updCheck(silent){
 }
 $("btnUpdCheck").addEventListener("click",()=>updCheck(false));
 $("btnUpdApply").addEventListener("click",async()=>{
-  if(state.f&&state.f.status==="ok"&&!state.f.done&&!confirm("Hóa đơn đang mở chưa được xuất file và sẽ bị bỏ khi app khởi động lại. Vẫn cập nhật?"))return;
+  if(state.f&&state.f.status==="ok"&&!(state.f.done&&state.f.done.length)&&!confirm("Hóa đơn đang mở chưa được xuất file và sẽ bị bỏ khi app khởi động lại. Vẫn cập nhật?"))return;
   $("btnUpdApply").disabled=true;$("btnUpdCheck").disabled=true;
   updMsg("ok","Đang tải và kiểm tra bản mới, vui lòng không đóng cửa sổ…");
   try{
@@ -200,7 +200,7 @@ $("btnUpdApply").addEventListener("click",async()=>{
 /* ---- Làm mới ---- */
 $("btnReset").addEventListener("click",async()=>{
   const f=state.f;
-  if(f&&f.status==="ok"&&!f.done&&!confirm("Hóa đơn này chưa được xuất file. Làm mới sẽ bỏ hóa đơn đang mở. Tiếp tục?"))return;
+  if(f&&f.status==="ok"&&!(f.done&&f.done.length)&&!confirm("Hóa đơn này chưa được xuất file. Làm mới sẽ bỏ hóa đơn đang mở. Tiếp tục?"))return;
   try{await post("/api/reset")}catch(e){banner(e.message);return}
   state.f=null;state.filter="all";banner("");$("pick").value="";$("dirNote").textContent="";render();
 });
@@ -258,13 +258,18 @@ function render(){
   $("preview").classList.toggle("hidden",!f);
   $("export").classList.toggle("hidden",!f||f.status!=="ok");
   if(!f){$("result").innerHTML="";return}
-  const r=f.resp;
+  const r0=f.resp,all=(r0&&r0.parts)||[r0],r=all[Math.min(f.pi||0,all.length-1)];
   $("fileName").textContent=f.name;
-  $("fileSub").textContent=f.status==="loading"?"· đang đọc…":f.status==="err"?"· không đọc được":("· "+({xlsx:"Excel .xlsx",xls:"Excel .xls (cũ)",xml2003:"Excel XML",html:"Excel dạng HTML"}[r.format]||r.format)+" · "+r.rows+" dòng"+(f.done?" · đã xuất":""));
+  $("fileSub").textContent=f.status==="loading"?"· đang đọc…":f.status==="err"?"· không đọc được":("· "+({xlsx:"Excel .xlsx",xls:"Excel .xls (cũ)",xml2003:"Excel XML",html:"Excel dạng HTML"}[r.format]||r.format)+(all.length>1?" · "+all.length+" toa hàng":" · "+r.rows+" dòng")+(f.done&&f.done.length?" · đã xuất":""));
   const pb=$("previewBody");
   if(f.status==="loading"){pb.innerHTML='<span class="muted">Đang đọc hóa đơn…</span>';return}
   if(f.status==="err"){pb.innerHTML='<div class="box bad"><b>Không chuyển đổi được hóa đơn này.</b><br>'+esc(r.error)+'<br><span class="muted">Bấm Làm mới để chọn hóa đơn khác.</span></div>';return}
-  let h='<div class="stats"><div><b>'+r.rows+'</b><span>dòng sản phẩm</span></div><div><b>'+r.normal+'</b><span>hàng thường</span></div><div><b>'+r.promo+'</b><span>hàng khuyến mại</span></div><div><b>'+r.exchange+'</b><span>hàng đổi/bảo hành (giá 0)</span></div><div><b>'+r.excluded+'</b><span>dòng bỏ (không có số lượng)</span></div></div>';
+  let h='';
+  if(all.length>1){
+    h+='<div class="box ok">File này có <b>'+all.length+' toa hàng</b>, app xuất mỗi toa ra <b>một file riêng</b>. Bấm từng toa để xem trước.</div>';
+    h+='<div class="filters" role="tablist" aria-label="Chọn toa">'+all.map((x,i)=>'<button class="fbtn pbtn" role="tab" data-p="'+i+'" aria-pressed="'+(x===r)+'">Toa '+(i+1)+' · '+esc(x.part)+' · '+x.rows+' dòng'+(x.errors.length?' · có lỗi':x.needConfirm?' · cần xem':'')+'</button>').join("")+'</div>';
+  }
+  h+='<div class="stats"><div><b>'+r.rows+'</b><span>dòng sản phẩm</span></div><div><b>'+r.normal+'</b><span>hàng thường</span></div><div><b>'+r.promo+'</b><span>hàng khuyến mại</span></div><div><b>'+r.exchange+'</b><span>hàng đổi/bảo hành (giá 0)</span></div><div><b>'+r.excluded+'</b><span>dòng bỏ (không có số lượng)</span></div></div>';
   h+='<div class="row"><span class="pill '+(r.known?"ok":"warn")+'">'+(r.known?"Đã nhận biết mẫu":"Mẫu mới, cần kiểm tra")+'</span><span>'+esc(r.profileName)+'</span></div>';
   h+='<div class="muted">Số phiếu: <b>'+esc(r.so||"không có")+'</b> · Ngày: <b>'+esc(r.ngay||"không có")+'</b> · File chuyển đổi: <span class="path">'+esc(r.suggestedName)+'</span></div>';
   if(r.scaleNote)h+='<div class="muted">Đơn giá được hiểu là <b>nghìn đồng</b> (nhân 1.000) vì hóa đơn ghi: <i>'+esc(r.scaleNote)+'</i></div>';
@@ -282,26 +287,30 @@ function render(){
     h+='<details><summary>'+r.excludedItems.length+' dòng không có số lượng nên bỏ, không nhập vào file</summary><div class="tw" style="margin-top:8px"><table><thead><tr><th>STT</th><th>Mã hàng</th><th>Tên hàng</th><th class="r">Đơn giá (đ)</th></tr></thead><tbody>'+r.excludedItems.map(it=>'<tr class="loai"><td class="num">'+esc(it.stt)+'</td><td class="num">'+esc(it.code)+'</td><td>'+esc(it.name)+'</td><td class="r num">'+(it.price?nf.format(it.price):"")+'</td></tr>').join("")+'</tbody></table></div></details>';
   }
   pb.innerHTML=h;
-  pb.querySelectorAll(".fbtn").forEach(b=>b.onclick=()=>{state.filter=b.dataset.f;render()});
-  // phần xuất
-  const blocked=r.errors.length>0;
-  $("confirmBox").classList.toggle("hidden",!r.needConfirm||blocked);
+  pb.querySelectorAll(".fbtn[data-f]").forEach(b=>b.onclick=()=>{state.filter=b.dataset.f;render()});
+  pb.querySelectorAll(".pbtn").forEach(b=>b.onclick=()=>{f.pi=+b.dataset.p;render()});
+  // phần xuất (file nhiều toa: xuất tất cả toa, mỗi toa một file)
+  const blocked=all.some(x=>x.errors.length>0),need=all.some(x=>x.needConfirm);
+  $("confirmBox").classList.toggle("hidden",!need||blocked);
   $("confirm").checked=!!f.confirm;
-  $("exportName").textContent="Tên file: "+r.suggestedName;
+  $("exportName").textContent=all.length>1?"Tên file: "+all.map(x=>x.suggestedName).join(", "):"Tên file: "+r.suggestedName;
+  $("btnExport").textContent=all.length>1?"Xuất "+all.length+" file Excel":"Xuất file Excel";
   updateExportBtn();
   const res=$("result");
-  if(f.done){
-    res.innerHTML='<div class="box ok"><b>Đã xuất xong, đã mở lại file và kiểm tra: đạt ('+f.done.rows+' dòng).</b><br><span class="path">'+esc(f.done.path)+'</span>'+(f.done.warning?'<br><b>'+esc(f.done.warning)+'</b>':'')+'<div class="row" style="margin-top:8px"><button class="btn ghost" id="btnOpen">Mở thư mục chứa file</button></div></div>';
+  if(f.done&&f.done.length){
+    const d=f.done,w=d.map(x=>x.warning).filter(Boolean)[0];
+    res.innerHTML='<div class="box ok"><b>Đã xuất xong '+(d.length>1?d.length+' file':'')+', đã mở lại file và kiểm tra: đạt.</b>'+d.map(x=>'<br><span class="path">'+esc(x.path)+'</span> <span class="muted">('+x.rows+' dòng)</span>').join("")+(w?'<br><b>'+esc(w)+'</b>':'')+'<div class="row" style="margin-top:8px"><button class="btn ghost" id="btnOpen">Mở thư mục chứa file</button></div></div>'+(f.error?'<div class="box bad">'+esc(f.error)+'</div>':'');
     const bo=$("btnOpen");if(state.cfg&&state.cfg.os!=="windows")bo.classList.add("hidden");
-    bo.onclick=async()=>{const j=await post("/api/openfolder",{path:f.done.path});if(!j.ok)banner(j.error)};
+    bo.onclick=async()=>{const j=await post("/api/openfolder",{path:d[0].path});if(!j.ok)banner(j.error)};
   }else if(f.error){res.innerHTML='<div class="box bad">'+esc(f.error)+'</div>'}
   else res.innerHTML="";
 }
 function updateExportBtn(){
   const f=state.f;if(!f||f.status!=="ok")return;
-  const r=f.resp,blocked=r.errors.length>0;
-  $("btnExport").disabled=blocked||(r.needConfirm&&!$("confirm").checked)||f.busy||!!f.done;
-  $("btnExport").title=f.done?"Đã xuất. Bấm Làm mới để làm hóa đơn khác":blocked?"Hóa đơn còn lỗi dữ liệu":(r.needConfirm&&!$("confirm").checked?"Cần tích xác nhận":"");
+  const all=f.resp.parts||[f.resp],blocked=all.some(x=>x.errors.length>0),need=all.some(x=>x.needConfirm);
+  const done=!!(f.done&&f.done.length===all.length);
+  $("btnExport").disabled=blocked||(need&&!$("confirm").checked)||f.busy||done;
+  $("btnExport").title=done?"Đã xuất. Bấm Làm mới để làm hóa đơn khác":blocked?"Hóa đơn còn lỗi dữ liệu"+(all.length>1?" (xem toa ghi có lỗi)":""):(need&&!$("confirm").checked?"Cần tích xác nhận":"");
 }
 $("confirm").addEventListener("change",()=>{const f=state.f;if(f)f.confirm=$("confirm").checked;updateExportBtn()});
 
@@ -312,10 +321,14 @@ $("btnPick").addEventListener("click",async()=>{
 $("btnExport").addEventListener("click",async()=>{
   const f=state.f;if(!f||f.status!=="ok")return;
   f.busy=true;f.error=null;updateExportBtn();
-  try{
-    const j=await post("/api/export",{id:f.resp.id,dir:$("dir").value,confirm:$("confirm").checked});
-    if(j.ok)f.done=j;else f.error=j.error;
-  }catch(e){f.error=e.message}
+  const all=f.resp.parts||[f.resp];f.done=f.done||[];
+  for(let i=0;i<all.length;i++){
+    if(f.done.some(x=>x.id===all[i].id))continue; // toa đã xuất ở lần bấm trước
+    try{
+      const j=await post("/api/export",{id:all[i].id,dir:$("dir").value,confirm:$("confirm").checked});
+      if(j.ok){j.id=all[i].id;f.done.push(j)}else{f.error=(all.length>1?"Toa "+(i+1)+": ":"")+j.error;break}
+    }catch(e){f.error=e.message;break}
+  }
   f.busy=false;render();
 });
 

@@ -1,7 +1,9 @@
 package core
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"sort"
 	"strings"
 )
@@ -161,32 +163,54 @@ func runExtra(read func(name string) ([]byte, error), template []byte) []SelfTes
 		rows    int
 		name    string
 		price0  float64
+		part    int // file nhiều toa: số thứ tự toa (từ 1), 0 = file chỉ có 1 toa
 	}
 	cases := []extra{
-		{4, "Mau 4 - Toa hang Tan Hoa Loi.xlsx", ProfileD, 27, "NhapHang_TanHoaLoi_01042026.xlsx", 7500},
-		{4, "dinh-dang-khac/Mau4.xls", ProfileD, 27, "NhapHang_TanHoaLoi_01042026.xlsx", 7500},
-		{5, "Mau 5 - gk 28-2.xls", ProfileE, 281, "NhapHang_DB26HA-00427_27022026.xlsx", 63892.8},
-		{6, "Mau 6 - Phieu xuat kho SL lay.xlsx", ProfileF, 35, "NhapHang_PhieuXuatKho_20102026.xlsx", 249381.72},
+		{4, "Mau 4 - Toa hang Tan Hoa Loi.xlsx", ProfileD, 27, "NhapHang_TanHoaLoi_01042026.xlsx", 7500, 0},
+		{4, "dinh-dang-khac/Mau4.xls", ProfileD, 27, "NhapHang_TanHoaLoi_01042026.xlsx", 7500, 0},
+		{5, "Mau 5 - gk 28-2.xls", ProfileE, 281, "NhapHang_DB26HA-00427_27022026.xlsx", 63892.8, 0},
+		{6, "Mau 6 - Phieu xuat kho SL lay.xlsx", ProfileF, 35, "NhapHang_PhieuXuatKho_20102026.xlsx", 249381.72, 0},
+		{7, "Mau 7 - Toa 2 sheet THL va HNP.xlsx", ProfileD, 17, "NhapHang_TanHoaLoi_11112026.xlsx", 5500, 1},
+		{7, "Mau 7 - Toa 2 sheet THL va HNP.xlsx", ProfileD, 7, "NhapHang_HongNhatPhat_11112026.xlsx", 44000, 2},
 	}
 	var out []SelfTestResult
 	for _, c := range cases {
 		r := SelfTestResult{N: c.n, OK: true}
 		fail := func(f string, a ...any) { r.OK = false; r.Problems = append(r.Problems, fmt.Sprintf(f, a...)) }
 		data, err := read(c.file)
+		if err != nil && c.n >= 7 && errors.Is(err, fs.ErrNotExist) {
+			// mẫu thêm sau: máy cập nhật bằng nút Cập nhật chưa có file mẫu này thì bỏ qua, không tính lỗi
+			r.Summary = fmt.Sprintf("Mẫu %d: bỏ qua vì thư mục samples chưa có %s", c.n, c.file)
+			out = append(out, r)
+			continue
+		}
 		if err != nil {
 			fail("không đọc được %s: %v", c.file, err)
 			out = append(out, r)
 			continue
 		}
 		g, kind, err := ReadGridAny(data)
-		var p *Parsed
+		var parts []*Parsed
 		if err == nil {
-			p, err = Parse(g)
+			parts, err = ParseAll(g, Options{})
 		}
 		if err != nil {
 			fail("%v", err)
 			out = append(out, r)
 			continue
+		}
+		want := 1
+		if c.part > 0 {
+			want = 2
+		}
+		if len(parts) != want {
+			fail("đọc ra %d toa, cần %d", len(parts), want)
+			out = append(out, r)
+			continue
+		}
+		p := parts[0]
+		if c.part > 0 {
+			p = parts[c.part-1]
 		}
 		rows := p.OutputRows()
 		if p.Profile != c.profile || len(rows) != c.rows || len(p.Errors) != 0 {
@@ -208,7 +232,11 @@ func runExtra(read func(name string) ([]byte, error), template []byte) []SelfTes
 		} else if err := VerifyExport(b, rows); err != nil {
 			fail("mở lại file xuất: %v", err)
 		}
-		r.Summary = fmt.Sprintf("Mẫu %d (%s, %s): %d dòng, đối chiếu tổng khớp, %d cảnh báo cần xác nhận khi dùng thật (chưa có kết quả mẫu để so từng ô)", c.n, c.file, kind, len(rows), len(p.Warnings))
+		lbl := c.file
+		if c.part > 0 {
+			lbl = fmt.Sprintf("%s, toa %d/%d %s", c.file, c.part, len(parts), p.Part)
+		}
+		r.Summary = fmt.Sprintf("Mẫu %d (%s, %s): %d dòng, đối chiếu tổng khớp, %d cảnh báo cần xác nhận khi dùng thật (chưa có kết quả mẫu để so từng ô)", c.n, lbl, kind, len(rows), len(p.Warnings))
 		out = append(out, r)
 	}
 	return out

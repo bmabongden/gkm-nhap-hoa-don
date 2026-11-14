@@ -1,6 +1,6 @@
 {
-  "version": "1.7.0",
-  "sha256": "51131e404c4bf2a05302f3269034bac878b7dcdaad43f277fa9ccb0d04f5b77a",
-  "size": 11929088,
-  "notes": "Thư mục xuất mặc định là thư mục chứa file hóa đơn; hộp chọn file Windows"
+  "version": "1.8.0",
+  "sha256": "3ef9bdbe3ff3581759ef68a140c0e6a899280a6ec1ddf2396659f8f344730c0c",
+  "size": 11945472,
+  "notes": "Bản 1.8.0: file có nhiều toa hàng (nhiều sheet hoặc nhiều toa nối nhau) thì mỗi toa xuất ra một file riêng; nhận toa Hồng Nhất Phát."
 }

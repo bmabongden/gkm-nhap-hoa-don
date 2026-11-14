@@ -142,3 +142,11 @@ Khiêm yêu cầu: ở mục xuất file, tự chọn vị trí là nơi file h�
 - Kéo thả: trình duyệt không cho biết đường dẫn, nên app dò Tải xuống, Desktop, Documents, Tài liệu, Zalo Received Files (cả trong OneDrive) và thư mục dự án, sâu tối đa 3 cấp, tìm đúng một file trùng tên + kích thước + ngày sửa; nếu có đúng một nơi thì dùng, nhiều nơi hoặc không thấy thì dùng thư mục xuất lần trước và hiện ghi chú.
 - Thư mục xuất vẫn được lưu lại sau mỗi lần xuất. File hóa đơn gốc không bị sửa; tên file xuất đã tồn tại thì thêm `_2`, `_3`.
 
+## 13. Cập nhật 14/11/2026: file nhiều toa xuất nhiều file (app 1.8.0)
+
+Khiêm yêu cầu: file có 2 toa hàng ở 2 trang khác nhau thì trả ra 2 file, không phải 1 file của trang đầu.
+- **Tách toa**: mỗi sheet có bảng hàng là một toa; trong một sheet, mỗi bảng có tiêu đề mới sau một dòng tổng (TỔNG, TỔNG TOA, TỔNG SỐ TIỀN, TỔNG CỘNG...) là một toa. Phần đầu toa (tên NCC, ngày) là các dòng liền ngay trên dòng tiêu đề. Tiêu đề lặp ở trang in sau (không có dòng tổng xen giữa) vẫn tính là cùng toa.
+- Mỗi toa đọc, đối chiếu và xuất **một file riêng**; sheet không có bảng hàng bị bỏ qua. Toa không đọc được thì các toa còn lại có cảnh báo nêu rõ.
+- **Ngoại lệ Mẫu 6** (phiếu xuất kho, cột SL LẤY): giữ quy tắc 22/10/2026, chỉ lấy bảng cuối vì NCC gửi kèm các toa cũ.
+- **Hồng Nhất Phát**: toa cùng kiểu Tân Hòa Lợi (STT, MÃ HÀNG, HIỆU, SL, ĐƠN GIÁ), đơn giá nghìn đồng nên nhân 1.000 như Tân Hòa Lợi; tên file `NhapHang_HongNhatPhat_<ngày>.xlsx`. Dòng tổng "TỔNG SỐ TIỀN" dùng để đối chiếu; ngày đọc từ ô "Ngày: dd/mm/yyyy".
+- **Mẫu 7** (file Khiêm gửi 14/11/2026, `samples/Mau 7 - Toa 2 sheet THL va HNP.xlsx`, không đưa lên kho công khai): toa 1 Tân Hòa Lợi 17 dòng (2 dòng không có số lượng bị bỏ), tổng toa 12.247,5 khớp; toa 2 Hồng Nhất Phát 7 dòng, tổng 4.606 khớp; mã 6304 lưu dạng số nên có cảnh báo cần xác nhận.

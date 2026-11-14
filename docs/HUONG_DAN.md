@@ -1,4 +1,4 @@
-# GKM - Nhập Hóa Đơn 1.7.0: hướng dẫn ngắn
+# GKM - Nhập Hóa Đơn 1.8.0: hướng dẫn ngắn
 
 Ứng dụng Windows độc lập (portable): **không cần Python, API, khóa/token**; xử lý hóa đơn chạy hoàn toàn trên máy, chỉ nút **Cập nhật** mới dùng Internet. Mọi thứ nằm trong thư mục dự án (trong tài liệu này ghi `E:\GKM_HoaDonNhapHang` làm ví dụ; thư mục thật là nơi anh chép dự án, ví dụ `D:\Data AI\App nhap hang\Chuan\GKM_HoaDonNhapHang`).
 
@@ -14,6 +14,9 @@
 4. **Bước 3 - Xuất**: thư mục lưu mặc định là **thư mục chứa file hóa đơn vừa chọn** (đổi bằng ô đường dẫn hoặc nút **Chọn thư mục…**). Chọn file bằng hộp thoại thì app biết chắc thư mục. Kéo thả thì trình duyệt không cho biết file nằm ở đâu, nên app tự tìm file theo tên, kích thước và ngày sửa trong Tải xuống, Desktop, Documents, OneDrive, Zalo Received Files và thư mục dự án; tìm được thì dùng thư mục đó (có ghi chú "app tìm thấy file theo tên và kích thước"), không chắc thì dùng thư mục xuất lần trước. Muốn chắc chắn thì chọn file bằng hộp thoại. Nếu có cảnh báo, đọc rồi tích ô xác nhận. Bấm **Xuất file Excel**. File tên `NhapHang_<số phiếu>_<ngày>.xlsx`. App tự mở lại file vừa xuất để kiểm tra rồi mới báo đạt.
 5. **Làm mới**: xong hóa đơn này thì bấm nút **Làm mới** (góc trên bên phải, cạnh nút **Cập nhật**) để xóa hóa đơn cũ, rồi chọn hóa đơn khác. Chưa bấm Làm mới thì app không nhận hóa đơn thứ hai. File đã xuất không bị xóa.
 6. Đóng cửa sổ là app tự thoát.
+
+### File có nhiều toa hàng (từ 1.8.0)
+Một file Excel gửi nhiều toa (mỗi toa một sheet, hoặc nhiều toa xếp nối nhau trong một sheet, mỗi toa có dòng tổng riêng) thì app **tách ra mỗi toa một file**. Bước 2 hiện một nút cho từng toa (ví dụ "Toa 1 · sheet THL · 17 dòng", "Toa 2 · sheet HNP · 7 dòng"); bấm để xem trước và đối chiếu từng toa. Bước 3 có nút **Xuất N file Excel**, xuất tất cả toa vào cùng thư mục, mỗi toa một tên, ví dụ `NhapHang_TanHoaLoi_11112026.xlsx` và `NhapHang_HongNhatPhat_11112026.xlsx` (hai toa trùng tên thì thêm `_toa1`, `_toa2`). Toa nào có lỗi dữ liệu thì chưa xuất toa nào; cảnh báo ở bất kỳ toa nào thì tích ô xác nhận một lần cho cả file. Riêng phiếu xuất kho dưới đây vẫn chỉ lấy bảng cuối.
 
 ### Phiếu xuất kho kiêm giấy nhận nợ (cột "SL LẤY", "ĐƠN GIÁ BÁN")
 Nhà cung cấp này hay gửi gộp cả chồng toa hàng trước đó trong một file. App **chỉ lấy bảng hóa đơn cuối cùng** (và ghi một dòng "File có N bảng hóa đơn" trong phần đối chiếu để bạn biết). Số lượng lấy từ cột **SL LẤY** (không phải SL ĐẶT), đơn giá lấy từ **ĐƠN GIÁ BÁN** (không phải ĐG ĐÃ CK). Dòng có SL LẤY bằng 0 hoặc trống bị bỏ như mọi dòng không có số lượng. Dòng "TỔNG PHẢI THU" (sau chiết khấu) chỉ hiện để tham khảo, không đưa vào file.

@@ -18,7 +18,7 @@ import (
 	"gkm/internal/update"
 )
 
-const version = "1.7.0"
+const version = "1.8.0"
 
 //go:embed template.xlsx
 var embeddedTemplate []byte
@@ -202,58 +202,70 @@ func runCLI(lg *log.Logger, root, out string, files []string) int {
 			continue
 		}
 		g, _, err := core.ReadGridAny(data)
-		var p *core.Parsed
+		var parts []*core.Parsed
 		if err == nil {
-			p, err = core.Parse(g)
+			parts, err = core.ParseAll(g, core.Options{})
 		}
 		if err != nil {
 			fmt.Printf("LỖI  %s: %v\n", filepath.Base(f), err)
 			code = 1
 			continue
 		}
-		n, k, d, x := p.Counts()
-		fmt.Printf("%s: %s | %d dòng (%d thường, %d khuyến mại, %d hàng đổi; bỏ %d dòng không có số lượng)\n", filepath.Base(f), core.ProfileNames[p.Profile], n+k+d, n, k, d, x)
-		for _, c := range p.Checks {
-			fmt.Printf("   [%s] %s: %s\n", c.Level, c.Name, c.Detail)
-		}
-		for _, w := range p.Warnings {
-			fmt.Println("   [cảnh báo]", w)
-		}
-		if len(p.Errors) > 0 {
-			for _, e := range p.Errors {
-				fmt.Println("   [lỗi]", e)
+		for _, p := range parts {
+			if cliExport(p, f, out, lg) != 0 {
+				code = 1
 			}
-			code = 1
-			continue
 		}
-		if p.NeedConfirm() {
-			fmt.Println("   Có cảnh báo: dùng giao diện để xem và xác nhận. Chế độ --cli không xuất file này.")
-			code = 1
-			continue
-		}
-		rows := p.OutputRows()
-		data2, err := core.BuildWorkbook(embeddedTemplate, rows)
-		if err == nil {
-			err = core.VerifyExport(data2, rows)
-		}
-		if err != nil {
-			fmt.Println("   [lỗi]", err)
-			code = 1
-			continue
-		}
-		if err := os.MkdirAll(out, 0o755); err != nil {
-			fmt.Println("   [lỗi] không tạo được thư mục xuất:", err)
-			code = 1
-			continue
-		}
-		path := core.UniquePath(out, p.SuggestedName())
-		if err := core.WriteNew(path, data2); err != nil {
-			fmt.Println("   [lỗi]", err)
-			code = 1
-			continue
-		}
-		fmt.Println("   Đã xuất:", path)
-		lg.Printf("cli: xuất %s từ %s", path, f)
 	}
 	return code
+}
+
+func partLabel(p *core.Parsed) string {
+	if p.PartOf > 1 {
+		return fmt.Sprintf(" [toa %d/%d, %s]", p.PartNo, p.PartOf, p.Part)
+	}
+	return ""
+}
+
+// cliExport in kết quả một toa và xuất file nếu không có lỗi/cảnh báo; trả 1 nếu không xuất.
+func cliExport(p *core.Parsed, f, out string, lg *log.Logger) int {
+	n, k, d, x := p.Counts()
+	fmt.Printf("%s: %s | %d dòng (%d thường, %d khuyến mại, %d hàng đổi; bỏ %d dòng không có số lượng)\n", filepath.Base(f)+partLabel(p), p.ProfileName(), n+k+d, n, k, d, x)
+	for _, c := range p.Checks {
+		fmt.Printf("   [%s] %s: %s\n", c.Level, c.Name, c.Detail)
+	}
+	for _, w := range p.Warnings {
+		fmt.Println("   [cảnh báo]", w)
+	}
+	if len(p.Errors) > 0 {
+		for _, e := range p.Errors {
+			fmt.Println("   [lỗi]", e)
+		}
+		return 1
+	}
+	if p.NeedConfirm() {
+		fmt.Println("   Có cảnh báo: dùng giao diện để xem và xác nhận. Chế độ --cli không xuất file này.")
+		return 1
+	}
+	rows := p.OutputRows()
+	data2, err := core.BuildWorkbook(embeddedTemplate, rows)
+	if err == nil {
+		err = core.VerifyExport(data2, rows)
+	}
+	if err != nil {
+		fmt.Println("   [lỗi]", err)
+		return 1
+	}
+	if err := os.MkdirAll(out, 0o755); err != nil {
+		fmt.Println("   [lỗi] không tạo được thư mục xuất:", err)
+		return 1
+	}
+	path := core.UniquePath(out, p.SuggestedName())
+	if err := core.WriteNew(path, data2); err != nil {
+		fmt.Println("   [lỗi]", err)
+		return 1
+	}
+	fmt.Println("   Đã xuất:", path)
+	lg.Printf("cli: xuất %s từ %s", path, f)
+	return 0
 }

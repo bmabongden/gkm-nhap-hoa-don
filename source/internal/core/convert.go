@@ -101,6 +101,15 @@ type Parsed struct {
 	ScaleNote string  // câu trên hóa đơn cho biết đơn giá tính nghìn đồng (nếu app nhận ra)
 	HasName   bool    // hóa đơn có cột tên hàng (không có thì cột Tên hàng để trống)
 	Notes     []Check // ghi chú thông tin (ví dụ file có nhiều bảng, chỉ lấy bảng cuối)
+	// Supplier là tên nhà cung cấp app nhận ra trên toa (ví dụ "Hồng Nhất Phát"), SupplierTag dùng trong tên file.
+	Supplier    string
+	SupplierTag string
+	// Part mô tả toa này nằm ở đâu khi file có nhiều toa (ví dụ "sheet HNP"); PartNo/PartOf đánh số từ 1, PartOf = 0 khi file chỉ có 1 toa.
+	Part   string
+	PartNo int
+	PartOf int
+	// NameSuffix thêm vào tên file khi hai toa trong cùng file trùng tên.
+	NameSuffix string
 }
 
 // OutRow là một dòng của file nhập hàng (A..G).
@@ -204,7 +213,7 @@ func isTotalRow(g *Grid, r int) bool {
 			continue
 		}
 		t := normText(cell.S)
-		if t == "tổng" || strings.HasPrefix(t, "tổng phải thu") || strings.HasPrefix(t, "tổng cộng") || strings.HasPrefix(t, "tổng tiền hàng") {
+		if t == "tổng" || strings.HasPrefix(t, "tổng phải thu") || strings.HasPrefix(t, "tổng cộng") || strings.HasPrefix(t, "tổng tiền hàng") || strings.HasPrefix(t, "tổng toa") || strings.HasPrefix(t, "tổng số tiền") {
 			return true
 		}
 	}
@@ -262,7 +271,7 @@ var (
 func rowHasTotals(g *Grid, r int) bool {
 	for c := 1; c <= g.MaxCol; c++ {
 		t := normText(g.At(r, c).S)
-		if t == "tổng" || strings.HasPrefix(t, "tổng tiền hàng") || strings.HasPrefix(t, "cộng tiền hàng") || strings.HasPrefix(t, "tổng cộng") || strings.HasPrefix(t, "tổng toa") || strings.HasPrefix(t, "tổng phải thu") {
+		if t == "tổng" || strings.HasPrefix(t, "tổng tiền hàng") || strings.HasPrefix(t, "cộng tiền hàng") || strings.HasPrefix(t, "tổng cộng") || strings.HasPrefix(t, "tổng toa") || strings.HasPrefix(t, "tổng phải thu") || strings.HasPrefix(t, "tổng số tiền") {
 			return true
 		}
 	}
@@ -315,6 +324,9 @@ func ParseWith(g *Grid, opt Options) (*Parsed, error) {
 		p.Notes = append(p.Notes, Check{"Nhiều hóa đơn trong file", LevelOK, strings.TrimPrefix(note, "")})
 	}
 	p.Known = p.Profile != ProfileX
+	if p.Profile == ProfileD {
+		p.SupplierTag, p.Supplier = detectSupplier(g)
+	}
 	cm := colMap{
 		stt: canon["stt"], code: canon["code"], name: canon["name"], unit: canon["unit"],
 		qty: canon["qty"], price: canon["price"], amount: canon["amount"],
@@ -545,13 +557,15 @@ func readMeta(g *Grid, prof string, cm colMap, hr int) Meta {
 			if k[0] >= hr {
 				break
 			}
-			if _, _, _, ok := dateParts(g.Cells[k].S); ok && !g.Cells[k].Num {
-				m.Ngay = strings.TrimSpace(g.Cells[k].S)
+			// ô ngày dạng "11/11/2026" hoặc "Ngày: 11/11/2026"
+			t := reNgayPrefix.ReplaceAllString(strings.TrimSpace(g.Cells[k].S), "")
+			if _, _, _, ok := dateParts(t); ok && !g.Cells[k].Num {
+				m.Ngay = t
 				break
 			}
 		}
 		m.TongTienHang = fptr(after(func(t string) bool {
-			return strings.HasPrefix(t, "tổng toa") || strings.HasPrefix(t, "tổng tiền hàng") || strings.HasPrefix(t, "cộng tiền hàng")
+			return strings.HasPrefix(t, "tổng toa") || strings.HasPrefix(t, "tổng tiền hàng") || strings.HasPrefix(t, "cộng tiền hàng") || strings.HasPrefix(t, "tổng số tiền")
 		}, true))
 	case ProfileF:
 		// ngày: ô ngày nằm trong khối ngay trên bảng (sau bảng trước đó nếu file có nhiều bảng)
@@ -888,6 +902,9 @@ func (p *Parsed) SuggestedName() string {
 		ten = strings.Trim(reBad.ReplaceAllString(stripAccents(p.Meta.So), "-"), "-")
 	}
 	if ten == "" {
+		ten = p.SupplierTag
+	}
+	if ten == "" {
 		ten = map[string]string{ProfileB: "BinhMinh", ProfileD: "TanHoaLoi", ProfileE: "DonHang", ProfileF: "PhieuXuatKho"}[p.Profile]
 		if ten == "" {
 			ten = "HoaDon"
@@ -897,7 +914,7 @@ func (p *Parsed) SuggestedName() string {
 	if d, m, y, ok := dateParts(p.Meta.Ngay); ok {
 		ngay = d + m + y
 	}
-	return fmt.Sprintf("NhapHang_%s_%s.xlsx", ten, ngay)
+	return fmt.Sprintf("NhapHang_%s_%s%s.xlsx", ten, ngay, p.NameSuffix)
 }
 
 // NeedConfirm: cần người dùng tích xác nhận trước khi xuất (mẫu lạ hoặc có mục đối chiếu lệch/cảnh báo).
@@ -915,6 +932,8 @@ func (p *Parsed) NeedConfirm() bool {
 
 // reThousand nhận các cách hóa đơn ghi chú "đơn giá tính nghìn đồng" (đã bỏ dấu, chữ thường).
 var reThousand = regexp.MustCompile(`(nghin|ngan)\s*(dong|vnd|d)\b|\b(dvt|don vi( tinh)?)\s*[:=]?\s*(nghin|ngan|1\.?000)(dong|vnd|d)?\b|\(\s*(x\s*)?1\.?000\s*(dong|vnd|d)\s*\)|\bx\s*1\.?000\s*(dong|vnd|d)\b|\b(don gia|gia|thanh tien)\s*\(\s*(nghin|ngan|k|1\.?000\s*(dong|vnd|d)?)\s*\)`)
+
+var reNgayPrefix = regexp.MustCompile(`^(?i)(ngày|ngay)\s*:?\s*`)
 
 var reAmountWords = regexp.MustCompile(`\b(chan|trieu|tram|muoi|linh|ty|le)\b`)
 

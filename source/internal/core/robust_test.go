@@ -11,7 +11,7 @@ func TestRobustMutatedGrids(t *testing.T) {
 	tpl := read(t, "MauFileNhapHang.xlsx")
 	junk := []string{"", " ", "abc", "-1", "0", "1e308", "NaN", "Inf", "1,2,3", "-0", "999999999999999999999", "tổng", "TỔNG", "SL lấy", "nghìn đồng", "\x00", "ĐƠN GIÁ BÁN"}
 	rng := rand.New(rand.NewSource(20261022))
-	files := []string{"Mau 1.xlsx", "Mau 2.xlsx", "Mau 3.xlsx", "Mau 4 - Toa hang Tan Hoa Loi.xlsx", "Mau 6 - Phieu xuat kho SL lay.xlsx"}
+	files := []string{"Mau 1.xlsx", "Mau 2.xlsx", "Mau 3.xlsx", "Mau 4 - Toa hang Tan Hoa Loi.xlsx", "Mau 6 - Phieu xuat kho SL lay.xlsx", "Mau 7 - Toa 2 sheet THL va HNP.xlsx"}
 	for _, name := range files {
 		g0, err := ReadGrid(read(t, name))
 		if err != nil {
@@ -40,6 +40,7 @@ func TestRobustMutatedGrids(t *testing.T) {
 						t.Fatalf("panic với %s lần %d: %v", name, iter, r)
 					}
 				}()
+				_, _ = ParseAll(g, Options{})
 				p, err := Parse(g)
 				if err != nil {
 					return
@@ -65,7 +66,7 @@ func TestRobustMutatedGrids(t *testing.T) {
 // TestRobustCorruptFiles cắt cụt / làm hỏng byte của file thật: ReadGridAny không được panic hay treo.
 func TestRobustCorruptFiles(t *testing.T) {
 	rng := rand.New(rand.NewSource(7))
-	for _, name := range []string{"Mau 1.xlsx", "Mau 5 - gk 28-2.xls", "Mau 6 - Phieu xuat kho SL lay.xlsx"} {
+	for _, name := range []string{"Mau 1.xlsx", "Mau 5 - gk 28-2.xls", "Mau 6 - Phieu xuat kho SL lay.xlsx", "Mau 7 - Toa 2 sheet THL va HNP.xlsx"} {
 		data := read(t, name)
 		for iter := 0; iter < 20; iter++ {
 			b := append([]byte(nil), data...)

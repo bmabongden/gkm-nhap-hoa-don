@@ -112,6 +112,9 @@ type ConvertResp struct {
 	// false khi app đoán từ tên và kích thước file kéo thả; SrcDir rỗng khi không xác định được.
 	SrcDir   string `json:"srcDir"`
 	SrcExact bool   `json:"srcExact"`
+	// File có nhiều toa hàng: Part mô tả toa này, Parts là tất cả các toa (kể cả toa đầu, chính là phần trên), mỗi toa xuất một file.
+	Part  string         `json:"part,omitempty"`
+	Parts []*ConvertResp `json:"parts,omitempty"`
 }
 
 func New(version string, template []byte, root string, pl Platform, lg *log.Logger) *App {
@@ -385,7 +388,7 @@ func view(id, name, format string, p *core.Parsed) *ConvertResp {
 		Checks: []core.Check{}, Warnings: []string{}, Errors: []string{}}
 	resp.OK = true
 	resp.Format = format
-	resp.Profile, resp.Known, resp.ProfileName = p.Profile, p.Known, core.ProfileNames[p.Profile]
+	resp.Profile, resp.Known, resp.ProfileName = p.Profile, p.Known, p.ProfileName()
 	resp.So, resp.Ngay = p.Meta.So, p.Meta.Ngay
 	resp.Normal, resp.Promo, resp.Exchange, resp.Excluded = p.Counts()
 	n := 0
@@ -409,6 +412,13 @@ func view(id, name, format string, p *core.Parsed) *ConvertResp {
 	resp.SuggestedName = p.SuggestedName()
 	resp.Scale, resp.HasName, resp.ScaleNote = p.Scale, p.HasName, p.ScaleNote
 	return resp
+}
+
+func partLog(p *core.Parsed) string {
+	if p.PartOf > 1 {
+		return fmt.Sprintf(" toa %d/%d (%s)", p.PartNo, p.PartOf, p.Part)
+	}
+	return ""
 }
 
 func failResp(name, msg string) *ConvertResp {
@@ -481,20 +491,31 @@ func (a *App) handleConvert(w http.ResponseWriter, r *http.Request) {
 	var resp *ConvertResp
 	if msg != "" {
 		resp = failResp(name, msg)
-	} else if p, err := core.Parse(g); err != nil {
+	} else if parts, err := core.ParseAll(g, core.Options{}); err != nil {
 		resp = failResp(name, parseMsg(err))
 	} else {
-		resp = view(newID(), name, kind, p)
-		resp.SrcDir, resp.SrcExact = srcDir, srcExact
+		results := map[string]*entry{} // chỉ giữ 1 hóa đơn (file), có thể gồm nhiều toa
+		var views []*ConvertResp
+		for _, p := range parts {
+			v := view(newID(), name, kind, p)
+			v.SrcDir, v.SrcExact, v.Part = srcDir, srcExact, p.Part
+			results[v.ID] = &entry{name: name, format: kind, grid: g, parsed: p}
+			views = append(views, v)
+			a.Log.Printf("phân tích %q (%s)%s: mẫu %s, %d dòng (%d thường, %d khuyến mại, %d hàng đổi, %d bỏ vì không có số lượng), %d cảnh báo, %d lỗi", name, kind, partLog(p), v.Profile, v.Rows, v.Normal, v.Promo, v.Exchange, v.Excluded, len(v.Warnings), len(v.Errors))
+		}
+		first := *views[0]
+		resp = &first
+		if len(views) > 1 {
+			resp.Parts = views
+		}
 		if srcDir != "" {
 			cur := a.loadSettings()
 			cur.LastSrcDir = srcDir
 			a.saveSettings(cur)
 		}
 		a.mu.Lock()
-		a.results = map[string]*entry{resp.ID: {name: name, format: kind, grid: g, parsed: p}} // chỉ giữ 1 hóa đơn
+		a.results = results
 		a.mu.Unlock()
-		a.Log.Printf("phân tích %q (%s): mẫu %s, %d dòng (%d thường, %d khuyến mại, %d hàng đổi, %d bỏ vì không có số lượng), %d cảnh báo, %d lỗi", name, kind, resp.Profile, resp.Rows, resp.Normal, resp.Promo, resp.Exchange, resp.Excluded, len(resp.Warnings), len(resp.Errors))
 	}
 	if !resp.OK {
 		a.Log.Printf("không phân tích được %q: %s", name, resp.Error)
