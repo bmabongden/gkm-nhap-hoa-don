@@ -158,3 +158,12 @@ Khiêm báo: phần mềm của các NCC khác nhau nên dấu . và , khác nha
 - **Đơn giá quá nhỏ**: nếu đơn giá cao nhất của hàng thường trên cả hóa đơn dưới 1.000 đ và hóa đơn không tự ghi đơn vị, app hiểu là nghìn đồng, nhân 1.000 tất cả đơn giá và hiện cảnh báo (bắt tích xác nhận). Thay quy tắc 02/10/2026 "chỉ nhân khi hóa đơn ghi chú rõ".
 - Thêm tên cột "Tên hàng hóa, dịch vụ" (điền Tên hàng). Mẫu lạ có ô "Số:" thì lấy số phiếu đặt tên file.
 - **Mẫu 8** (`samples/Mau 8 - Phieu giao hang MISA nghin dong.xlsx`, không lên kho công khai): 12 dòng (8 thường, 4 giá 0), tổng 87.650 khớp, tên file `NhapHang_BH01489_13112026.xlsx`.
+
+## 15. Cập nhật 14/11/2026: giá gốc và % giảm giá (app 1.8.2)
+
+Khiêm báo (hóa đơn KiotViet "2.xlsx" và kết quả "2 done.xlsx"): sản phẩm có giá gốc rồi trừ % thì phải nhập giá gốc và % giảm, không nhập thẳng giá đã trừ.
+- Cột % giảm giá của hóa đơn ("Giảm giá %", "Giảm giá (%)", "CK %", "Chiết khấu %", "Tỷ lệ CK", "CK(%)") ghi vào cột **Giảm giá (%)** (cột F) của mẫu cho mọi mẫu hóa đơn (trước chỉ mẫu A). Giảm 0% để trống.
+- Có cả "Đơn giá" và "Giá bán" thì **Đơn giá** (giá gốc) là đơn giá nhập. Cột "Giảm giá" (số tiền) không ghi vào file.
+- Dòng giảm 100%: ghi giá gốc và 100% (thay vì đơn giá 0), xếp loại khuyến mại để xem trước dễ thấy.
+- Đối chiếu "Thành tiền dòng" chấp nhận thành tiền trước hoặc sau giảm giá. Giảm giá cấp hóa đơn (dòng "Giảm giá" dưới tổng) chỉ hiện để tham khảo.
+- Hóa đơn KiotViet: số hóa đơn lấy từ tên sheet "ChiTietHoaDon_HD…". **Mẫu 9** (`samples/Mau 9 - KiotViet don gia goc giam gia phan tram.xlsx`).

@@ -393,9 +393,9 @@ func view(id, name, format string, p *core.Parsed) *ConvertResp {
 	resp.Normal, resp.Promo, resp.Exchange, resp.Excluded = p.Counts()
 	n := 0
 	for _, it := range p.Items {
-		ck := ""
-		if p.Profile == core.ProfileA {
-			ck = it.CK.Text()
+		ck := it.CK.Text() // % giảm giá của dòng (trống nếu hóa đơn không có)
+		if v, ok := it.CK.Float(); ok && v == 0 && p.Profile != core.ProfileA {
+			ck = ""
 		}
 		if it.Kind == core.KindExcluded {
 			resp.ExcludedItems = append(resp.ExcludedItems, rowView(it, 0, ""))

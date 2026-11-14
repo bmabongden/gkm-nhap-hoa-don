@@ -1,6 +1,6 @@
 {
-  "version": "1.8.1",
-  "sha256": "959564a0b159ad2f56e4f11e8d53ed9b26c8609dd780ec4789ccc8d3d8bddd18",
-  "size": 11948032,
-  "notes": "Bản 1.8.1: sửa đơn giá thiếu hệ số 1.000 do nhầm dấu . và , (đọc số không phụ thuộc phần mềm nguồn; đơn giá đều dưới 1.000 đ thì hiểu là nghìn đồng); điền tên hàng cột 'Tên hàng hóa, dịch vụ'."
+  "version": "1.8.2",
+  "sha256": "079f3290342198e9fff6a9fbdfef0fe8760b51c01154a4e934b8d8d2dce166f9",
+  "size": 11949568,
+  "notes": "Bản 1.8.2: hóa đơn có giá gốc và % giảm giá thì nhập giá gốc và ghi % vào cột Giảm giá (%), không nhập thẳng giá đã trừ."
 }

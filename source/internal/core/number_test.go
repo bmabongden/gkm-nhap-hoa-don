@@ -54,3 +54,48 @@ func TestTinyPricesScaledToThousand(t *testing.T) {
 		t.Fatal("phải có cảnh báo và bắt xác nhận")
 	}
 }
+
+// Hóa đơn có Đơn giá (gốc), Giảm giá %, Giá bán (đã trừ): nhập giá gốc và ghi % vào cột Giảm giá (%) (Khiêm 14/11/2026).
+func TestOriginalPriceWithPercentDiscount(t *testing.T) {
+	g := newGrid("ChiTietHoaDon_HD086017_KV141120")
+	hdr := []string{"Mã hàng", "Tên hàng", "Số lượng", "Đơn giá", "Giảm giá %", "Giảm giá", "Giá bán", "Thành tiền"}
+	for c, h := range hdr {
+		g.Cells[[2]int{1, c + 1}] = Cell{S: h}
+	}
+	num := func(s string) Cell { return Cell{S: s, Num: true} }
+	rows := [][]Cell{
+		{{S: "HDNVIVAFI"}, {S: "Bộ nhông sên dĩa"}, num("2"), num("317000"), num("10"), num("31700"), num("285300"), num("570600")},
+		{{S: "6301ZZ"}, {S: "Bạc đạn"}, num("6"), num("40100"), num("100"), num("40100"), num("0"), num("0")},
+		{{S: "X1"}, {S: "Hàng không giảm"}, num("1"), num("50000"), num("0"), num("0"), num("50000"), num("50000")},
+	}
+	for i, r := range rows {
+		for c, v := range r {
+			g.Cells[[2]int{i + 2, c + 1}] = v
+		}
+	}
+	g.Cells[[2]int{5, 1}] = Cell{S: "Tổng tiền hàng"}
+	g.Cells[[2]int{5, 2}] = num("620600")
+	g.MaxRow, g.MaxCol = 5, len(hdr)
+	p, err := Parse(g)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := p.OutputRows()
+	if out[0].Price != 317000 || out[0].CK.S != "10" {
+		t.Fatalf("dòng 1 phải là giá gốc 317000 và giảm 10%%: %v %q", out[0].Price, out[0].CK.S)
+	}
+	if out[1].Price != 40100 || out[1].CK.S != "100" || out[1].Kind != KindPromo {
+		t.Fatalf("dòng giảm 100%%: %v %q %s", out[1].Price, out[1].CK.S, out[1].Kind)
+	}
+	if out[2].Price != 50000 || !out[2].CK.Empty() {
+		t.Fatalf("dòng giảm 0%% phải để trống cột giảm giá: %q", out[2].CK.S)
+	}
+	if p.Meta.So != "HD086017" {
+		t.Fatalf("số hóa đơn từ tên sheet: %q", p.Meta.So)
+	}
+	for _, c := range p.Checks {
+		if c.Level != LevelOK {
+			t.Fatalf("đối chiếu %s lệch: %s", c.Name, c.Detail)
+		}
+	}
+}

@@ -142,6 +142,7 @@ var headerAliases = map[string]string{
 	"đơn giá": "price", "đg": "price", "giá": "price", "đơn giá bán": "price", "đ.giá": "price", "giá bán": "price", "đg bán": "price",
 	"thành tiền": "amount", "t.tiền": "amount", "thành tiền (vnđ)": "amount",
 	"ck(%)": "ck", "giá net": "net",
+	"giảm giá %": "ck", "giảm giá (%)": "ck", "ck %": "ck", "ck%": "ck", "% ck": "ck", "chiết khấu %": "ck", "chiết khấu (%)": "ck", "tỷ lệ ck": "ck", "tỷ lệ ck (%)": "ck", "% giảm giá": "ck",
 	"hiệu": "brand", "nhãn hiệu": "brand", "hãng": "brand", "thương hiệu": "brand",
 }
 
@@ -181,6 +182,13 @@ func headerAt(g *Grid, r int) (canon map[string]int, raw map[string]int, ok bool
 	}
 	for _, k := range []string{"đơn giá bán", "đg bán"} {
 		if c, ok := raw[k]; ok {
+			canon["price"] = c
+		}
+	}
+	// Hóa đơn có cả "Đơn giá" (giá gốc) và "Giá bán" (đã trừ giảm giá, ví dụ KiotViet): nhập giá gốc, % giảm giá
+	// ghi vào cột Giảm giá (%) của mẫu, không nhập thẳng giá đã trừ (Khiêm 14/11/2026).
+	if c, ok := raw["đơn giá"]; ok {
+		if _, ok2 := raw["giá bán"]; ok2 {
 			canon["price"] = c
 		}
 	}
@@ -441,6 +449,15 @@ func ParseWith(g *Grid, opt Options) (*Parsed, error) {
 		default:
 			it.Kind = KindNormal
 		}
+		if ckv, ok := it.CK.Float(); ok && cm.ck > 0 && it.Kind == KindNormal {
+			switch {
+			case ckv >= 100:
+				it.Kind = KindPromo // giảm 100%: hàng tặng, vẫn ghi giá gốc và 100% như hóa đơn
+				it.Note = "Giảm giá 100%: ghi đơn giá gốc và giảm giá 100% như hóa đơn"
+			case ckv < 0 || ckv > 100:
+				p.Warnings = append(p.Warnings, fmt.Sprintf("Dòng STT %s (%s): giảm giá %s%% bất thường. Cần kiểm tra.", stt, it.Code, vnNum(ckv)))
+			}
+		}
 		if it.Kind != KindExcluded {
 			q, qok := it.Qty.Float()
 			switch {
@@ -501,6 +518,12 @@ func ParseWith(g *Grid, opt Options) (*Parsed, error) {
 		}
 	}
 	p.Meta = readMeta(g, p.Profile, cm, hr)
+	if p.Meta.So == "" {
+		// hóa đơn KiotViet xuất Excel: số hóa đơn nằm trong tên sheet "ChiTietHoaDon_HD086017_..."
+		if m := reKVSheet.FindStringSubmatch(g.Sheet); m != nil {
+			p.Meta.So = m[1]
+		}
+	}
 	if p.Profile == ProfileD || p.Profile == ProfileX {
 		p.Meta.Tail = readTail(g, stopRow)
 	}
@@ -761,7 +784,8 @@ func check(p *Parsed) []Check {
 			q, qok := it.Qty.Float()
 			pr, pok := parseMoney(it.PriceRaw)
 			a, aok := it.Amount.Float()
-			if !qok || !pok || !aok || math.Abs(q*pr-a) > 0.5 {
+			ck, _ := it.CK.Float() // thành tiền có thể đã trừ % giảm giá (KiotViet) hoặc chưa (AMIS)
+			if !qok || !pok || !aok || (math.Abs(q*pr-a) > 0.5 && math.Abs(q*pr*(1-ck/100)-a) > 0.5) {
 				bad = append(bad, it.STT)
 			}
 		}
@@ -880,8 +904,10 @@ func (p *Parsed) OutputRows() []OutRow {
 			continue
 		}
 		r := OutRow{Code: cleanCtl(it.Code), Name: cleanCtl(it.Name), Price: it.Price, Qty: it.Qty, Kind: it.Kind}
-		if p.Profile == ProfileA && !it.CK.Empty() {
-			r.CK = it.CK // giữ nguyên văn bản như "2,00"
+		if !it.CK.Empty() {
+			if v, ok := it.CK.Float(); p.Profile == ProfileA || (ok && v != 0) {
+				r.CK = it.CK // % giảm giá như hóa đơn (mẫu A giữ nguyên văn bản như "2,00"); giảm 0% thì để trống
+			}
 		}
 		rows = append(rows, r)
 	}
@@ -944,6 +970,8 @@ func (p *Parsed) NeedConfirm() bool {
 
 // reThousand nhận các cách hóa đơn ghi chú "đơn giá tính nghìn đồng" (đã bỏ dấu, chữ thường).
 var reThousand = regexp.MustCompile(`(nghin|ngan)\s*(dong|vnd|d)\b|\b(dvt|don vi( tinh)?)\s*[:=]?\s*(nghin|ngan|1\.?000)(dong|vnd|d)?\b|\(\s*(x\s*)?1\.?000\s*(dong|vnd|d)\s*\)|\bx\s*1\.?000\s*(dong|vnd|d)\b|\b(don gia|gia|thanh tien)\s*\(\s*(nghin|ngan|k|1\.?000\s*(dong|vnd|d)?)\s*\)`)
+
+var reKVSheet = regexp.MustCompile(`(?i)^chitiethoadon_(HD\d+)`)
 
 var reNgayPrefix = regexp.MustCompile(`^(?i)(ngày|ngay)\s*:?\s*`)
 

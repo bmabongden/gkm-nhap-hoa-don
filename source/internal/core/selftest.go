@@ -173,6 +173,7 @@ func runExtra(read func(name string) ([]byte, error), template []byte) []SelfTes
 		{7, "Mau 7 - Toa 2 sheet THL va HNP.xlsx", ProfileD, 17, "NhapHang_TanHoaLoi_11112026.xlsx", 5500, 1},
 		{7, "Mau 7 - Toa 2 sheet THL va HNP.xlsx", ProfileD, 7, "NhapHang_HongNhatPhat_11112026.xlsx", 44000, 2},
 		{8, "Mau 8 - Phieu giao hang MISA nghin dong.xlsx", ProfileX, 12, "NhapHang_BH01489_13112026.xlsx", 250000, 0},
+		{9, "Mau 9 - KiotViet don gia goc giam gia phan tram.xlsx", ProfileX, 12, "NhapHang_HD086017_khongngay.xlsx", 40100, 0},
 	}
 	var out []SelfTestResult
 	for _, c := range cases {

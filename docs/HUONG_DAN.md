@@ -1,4 +1,4 @@
-# GKM - Nhập Hóa Đơn 1.8.1: hướng dẫn ngắn
+# GKM - Nhập Hóa Đơn 1.8.2: hướng dẫn ngắn
 
 Ứng dụng Windows độc lập (portable): **không cần Python, API, khóa/token**; xử lý hóa đơn chạy hoàn toàn trên máy, chỉ nút **Cập nhật** mới dùng Internet. Mọi thứ nằm trong thư mục dự án (trong tài liệu này ghi `E:\GKM_HoaDonNhapHang` làm ví dụ; thư mục thật là nơi anh chép dự án, ví dụ `D:\Data AI\App nhap hang\Chuan\GKM_HoaDonNhapHang`).
 
@@ -22,6 +22,7 @@ Một file Excel gửi nhiều toa (mỗi toa một sheet, hoặc nhiều toa x�
 Nhà cung cấp này hay gửi gộp cả chồng toa hàng trước đó trong một file. App **chỉ lấy bảng hóa đơn cuối cùng** (và ghi một dòng "File có N bảng hóa đơn" trong phần đối chiếu để bạn biết). Số lượng lấy từ cột **SL LẤY** (không phải SL ĐẶT), đơn giá lấy từ **ĐƠN GIÁ BÁN** (không phải ĐG ĐÃ CK). Dòng có SL LẤY bằng 0 hoặc trống bị bỏ như mọi dòng không có số lượng. Dòng "TỔNG PHẢI THU" (sau chiết khấu) chỉ hiện để tham khảo, không đưa vào file.
 
 ## 3. Quy tắc đang áp dụng
+- Hóa đơn có giá gốc và % giảm giá (ví dụ KiotViet: Đơn giá, Giảm giá %, Giá bán): cột Đơn giá ghi **giá gốc**, cột Giảm giá (%) ghi **% giảm** như hóa đơn, không nhập thẳng giá đã trừ (từ 1.8.2). Dòng giảm 100% vẫn ghi giá gốc và 100%. Dòng giảm 0% để trống cột giảm giá.
 - Mã hàng giữ nguyên như hóa đơn (kể cả số 0 đầu), không có quy tắc riêng cho hàng "ốc".
 - Điền tên hàng. Không giảm giá thì để trống. Dòng chỉ có số lượng (hàng đổi, bảo hành, khuyến mại) ghi đơn giá 0. Dòng có giá mà không có số lượng thì bỏ.
 - Chiết khấu cấp hóa đơn và thuế suất không đưa vào file (mẫu nhập hàng không có chỗ cho chúng).
