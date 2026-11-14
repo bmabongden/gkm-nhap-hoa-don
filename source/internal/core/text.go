@@ -14,11 +14,8 @@ import (
 )
 
 var (
-	reThousandComma = regexp.MustCompile(`^\d{1,3}(,\d{3})+$`)
-	reMoneyComma    = regexp.MustCompile(`^\d{1,3}(,\d{3})+(\.\d+)?$`)
-	reMoneyDot      = regexp.MustCompile(`^\d{1,3}(\.\d{3})+(,\d+)?$`)
-	reDate          = regexp.MustCompile(`^(\d{1,2})/(\d{1,2})/(\d{4})$`)
-	reDateWords     = regexp.MustCompile(`ngày\s+(\d+)\s+tháng\s+(\d+)\s+năm\s+(\d{4})`)
+	reDate      = regexp.MustCompile(`^(\d{1,2})/(\d{1,2})/(\d{4})$`)
+	reDateWords = regexp.MustCompile(`ngày\s+(\d+)\s+tháng\s+(\d+)\s+năm\s+(\d{4})`)
 )
 
 // normText: bỏ khoảng trắng thừa, chữ thường, chuẩn hóa NFC (để so nhãn cột/chuỗi đánh dấu).
@@ -37,26 +34,71 @@ func stripAccents(s string) string {
 	return out
 }
 
-// numFromText đọc số từ chuỗi để đối chiếu: "492,000" -> 492000, "2,00" -> 2, "5 %" -> 5.
-func numFromText(s string) (float64, bool) {
-	t := strings.ReplaceAll(strings.TrimSpace(s), " ", "")
-	t = strings.ReplaceAll(t, "%", "")
+// parseVNNumber đọc số dạng chữ do nhiều phần mềm xuất ra, không phụ thuộc dấu . hay , làm phân cách:
+// "250.000" và "250,000" -> 250000; "1.234.567,5" và "1,234,567.5" -> 1234567.5; "0,35" và "0.35" -> 0.35.
+// Quy ước: có cả hai dấu thì dấu đứng sau là dấu thập phân; chỉ một loại dấu mà mọi nhóm sau nó đúng 3 chữ số
+// (và phần đầu khác 0) thì là phân cách nghìn; còn lại là dấu thập phân.
+func parseVNNumber(s string) (float64, bool) {
+	t := strings.TrimSpace(s)
+	t = strings.NewReplacer(" ", "", "\u00a0", "", "%", "", "đ", "", "Đ", "").Replace(t)
+	neg := false
+	if strings.HasPrefix(t, "(") && strings.HasSuffix(t, ")") {
+		neg, t = true, t[1:len(t)-1]
+	}
+	if strings.HasPrefix(t, "-") {
+		neg, t = !neg, t[1:]
+	}
 	if t == "" {
 		return 0, false
 	}
-	if reThousandComma.MatchString(t) {
-		t = strings.ReplaceAll(t, ",", "")
-	} else {
-		t = strings.ReplaceAll(t, ",", ".")
+	dot, comma := strings.LastIndex(t, "."), strings.LastIndex(t, ",")
+	switch {
+	case dot >= 0 && comma >= 0:
+		dec, th := ".", ","
+		if comma > dot {
+			dec, th = ",", "."
+		}
+		t = strings.ReplaceAll(t, th, "")
+		t = strings.Replace(t, dec, ".", 1)
+	case dot >= 0 || comma >= 0:
+		sep := "."
+		if comma >= 0 {
+			sep = ","
+		}
+		parts := strings.Split(t, sep)
+		thousands := len(parts[0]) >= 1 && len(parts[0]) <= 3 && parts[0] != "0"
+		for _, g := range parts[1:] {
+			if len(g) != 3 {
+				thousands = false
+			}
+		}
+		if thousands {
+			t = strings.ReplaceAll(t, sep, "")
+		} else if len(parts) == 2 {
+			t = parts[0] + "." + parts[1]
+		} else {
+			return 0, false
+		}
+	}
+	for _, r := range t {
+		if (r < '0' || r > '9') && r != '.' && r != 'e' && r != 'E' && r != '+' && r != '-' {
+			return 0, false
+		}
 	}
 	f, err := strconv.ParseFloat(t, 64)
 	if err != nil || math.IsNaN(f) || math.IsInf(f, 0) {
 		return 0, false
 	}
+	if neg {
+		f = -f
+	}
 	return f, true
 }
 
-// parseMoney đọc đơn giá: số giữ nguyên, chuỗi "492,000" đổi thành 492000. ok=false nếu trống/không phải số.
+// numFromText đọc số từ chuỗi (số lượng, thành tiền, tổng): xem parseVNNumber.
+func numFromText(s string) (float64, bool) { return parseVNNumber(s) }
+
+// parseMoney đọc đơn giá: ô số giữ nguyên, ô chữ đọc bằng parseVNNumber. ok=false nếu trống/không phải số.
 func parseMoney(c Cell) (float64, bool) {
 	if c.Empty() {
 		return 0, false
@@ -64,19 +106,7 @@ func parseMoney(c Cell) (float64, bool) {
 	if c.Num {
 		return c.Float()
 	}
-	t := strings.ReplaceAll(strings.TrimSpace(c.S), " ", "")
-	switch {
-	case reMoneyComma.MatchString(t):
-		t = strings.ReplaceAll(t, ",", "")
-	case reMoneyDot.MatchString(t):
-		t = strings.ReplaceAll(t, ".", "")
-		t = strings.ReplaceAll(t, ",", ".")
-	}
-	f, err := strconv.ParseFloat(t, 64)
-	if err != nil || math.IsNaN(f) || math.IsInf(f, 0) {
-		return 0, false
-	}
-	return f, true
+	return parseVNNumber(c.S)
 }
 
 func isDigits(s string) bool {

@@ -1,6 +1,6 @@
 {
-  "version": "1.8.0",
-  "sha256": "3ef9bdbe3ff3581759ef68a140c0e6a899280a6ec1ddf2396659f8f344730c0c",
-  "size": 11945472,
-  "notes": "Bản 1.8.0: file có nhiều toa hàng (nhiều sheet hoặc nhiều toa nối nhau) thì mỗi toa xuất ra một file riêng; nhận toa Hồng Nhất Phát."
+  "version": "1.8.1",
+  "sha256": "959564a0b159ad2f56e4f11e8d53ed9b26c8609dd780ec4789ccc8d3d8bddd18",
+  "size": 11948032,
+  "notes": "Bản 1.8.1: sửa đơn giá thiếu hệ số 1.000 do nhầm dấu . và , (đọc số không phụ thuộc phần mềm nguồn; đơn giá đều dưới 1.000 đ thì hiểu là nghìn đồng); điền tên hàng cột 'Tên hàng hóa, dịch vụ'."
 }

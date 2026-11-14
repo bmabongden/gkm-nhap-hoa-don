@@ -136,6 +136,7 @@ var headerAliases = map[string]string{
 	"mã hàng hóa": "code", "mã hàng hoá": "code", "mã sản phẩm": "code", "mã phụ tùng": "code", "mã pt": "code",
 	"tên hàng": "name", "tên vật tư": "name", "tên": "name", "tên sản phẩm": "name", "tên hàng hóa": "name",
 	"tên hàng hoá": "name", "tên hh": "name", "tên phụ tùng": "name", "diễn giải": "name", "tên mặt hàng": "name",
+	"tên hàng hóa, dịch vụ": "name", "tên hàng hoá, dịch vụ": "name", "tên hàng hóa dịch vụ": "name", "tên hàng hoá dịch vụ": "name",
 	"đv": "unit", "dvt": "unit", "đvt": "unit", "đơn vị": "unit", "đơn vị tính": "unit",
 	"số lượng": "qty", "sl": "qty", "s.lượng": "qty", "số lg": "qty", "slượng": "qty", "số lượng thực xuất": "qty", "sl đặt hàng": "qty", "sl đặt": "qty", "số lượng đặt": "qty", "sl xuất": "qty", "sl lấy": "qty", "số lượng lấy": "qty", "sl thực lấy": "qty",
 	"đơn giá": "price", "đg": "price", "giá": "price", "đơn giá bán": "price", "đ.giá": "price", "giá bán": "price", "đg bán": "price",
@@ -471,8 +472,14 @@ func ParseWith(g *Grid, opt Options) (*Parsed, error) {
 				maxP = it.Price
 			}
 		}
-		if maxP > 0 && maxP < 1000 {
-			p.Warnings = append(p.Warnings, fmt.Sprintf("Đơn giá cao nhất trên hóa đơn chỉ là %s đ, nhỏ bất thường. Hóa đơn có thể ghi đơn giá theo nghìn đồng mà app không nhận ra: hãy kiểm tra hóa đơn gốc trước khi xuất.", vnNum(maxP)))
+		if maxP > 0 && maxP < 1000 && opt.PriceScale == 0 {
+			// Phần mềm của NCC xuất số theo nghìn đồng (hoặc nhầm dấu . và , khi xuất) nên đơn giá thiếu 3 số 0:
+			// không hàng nào dưới 1.000 đ cả hóa đơn thì hiểu là nghìn đồng và nhân 1.000 (Khiêm yêu cầu 14/11/2026).
+			for i := range p.Items {
+				p.Items[i].Price = math.Round(p.Items[i].Price*1000*1e6) / 1e6
+			}
+			p.Scale = 1000
+			p.Warnings = append(p.Warnings, fmt.Sprintf("Đơn giá cao nhất trên hóa đơn chỉ là %s nên app hiểu hóa đơn ghi theo NGHÌN ĐỒNG (phần mềm của nhà cung cấp bỏ 3 số 0 hoặc nhầm dấu . và ,) và đã nhân 1.000 khi xuất (ví dụ %s thành %s đ). Hãy xem lại đơn giá trong bảng bên dưới.", vnNum(maxP), vnNum(maxP), vnNum(maxP*1000)))
 		}
 	}
 	frac := 0
@@ -542,6 +549,11 @@ func readMeta(g *Grid, prof string, cm colMap, hr int) Meta {
 			m.Ngay = c.Text()
 		}
 		if c, ok := after(eq("số:"), false); ok {
+			m.So = c.Text()
+		}
+	case ProfileX:
+		// mẫu lạ có ô "Số:" (ví dụ phiếu giao hàng MISA): lấy số phiếu đặt tên file
+		if c, ok := after(eq("số:"), false); ok && !c.Num {
 			m.So = c.Text()
 		}
 	case ProfileB:

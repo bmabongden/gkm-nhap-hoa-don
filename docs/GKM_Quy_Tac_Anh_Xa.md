@@ -150,3 +150,11 @@ Khiêm yêu cầu: file có 2 toa hàng ở 2 trang khác nhau thì trả ra 2 f
 - **Ngoại lệ Mẫu 6** (phiếu xuất kho, cột SL LẤY): giữ quy tắc 22/10/2026, chỉ lấy bảng cuối vì NCC gửi kèm các toa cũ.
 - **Hồng Nhất Phát**: toa cùng kiểu Tân Hòa Lợi (STT, MÃ HÀNG, HIỆU, SL, ĐƠN GIÁ), đơn giá nghìn đồng nên nhân 1.000 như Tân Hòa Lợi; tên file `NhapHang_HongNhatPhat_<ngày>.xlsx`. Dòng tổng "TỔNG SỐ TIỀN" dùng để đối chiếu; ngày đọc từ ô "Ngày: dd/mm/yyyy".
 - **Mẫu 7** (file Khiêm gửi 14/11/2026, `samples/Mau 7 - Toa 2 sheet THL va HNP.xlsx`, không đưa lên kho công khai): toa 1 Tân Hòa Lợi 17 dòng (2 dòng không có số lượng bị bỏ), tổng toa 12.247,5 khớp; toa 2 Hồng Nhất Phát 7 dòng, tổng 4.606 khớp; mã 6304 lưu dạng số nên có cảnh báo cần xác nhận.
+
+## 14. Cập nhật 14/11/2026: dấu . và , và đơn giá thiếu 1.000 (app 1.8.1)
+
+Khiêm báo: phần mềm của các NCC khác nhau nên dấu . và , khác nhau, app nhận nhầm dấu làm đơn giá thiếu hệ số 1.000 (file "PHIẾU GIAO HÀNG K. GIA KHÁNH 13.11.xlsx": đơn giá 250, 145, 0,35 nghĩa là 250.000, 145.000, 350 đ).
+- **Đọc số dạng chữ**: có cả hai dấu thì dấu đứng sau là thập phân (1.234,5 và 1,234.5); chỉ một loại dấu mà mọi nhóm sau nó đúng 3 chữ số và phần đầu khác 0 thì là phân cách nghìn (250.000 = 250,000 = 250000); còn lại là thập phân (0,35 = 0.35; 0.350 = 0,35). Bỏ khoảng trắng, "đ", "%"; số trong ngoặc là số âm.
+- **Đơn giá quá nhỏ**: nếu đơn giá cao nhất của hàng thường trên cả hóa đơn dưới 1.000 đ và hóa đơn không tự ghi đơn vị, app hiểu là nghìn đồng, nhân 1.000 tất cả đơn giá và hiện cảnh báo (bắt tích xác nhận). Thay quy tắc 02/10/2026 "chỉ nhân khi hóa đơn ghi chú rõ".
+- Thêm tên cột "Tên hàng hóa, dịch vụ" (điền Tên hàng). Mẫu lạ có ô "Số:" thì lấy số phiếu đặt tên file.
+- **Mẫu 8** (`samples/Mau 8 - Phieu giao hang MISA nghin dong.xlsx`, không lên kho công khai): 12 dòng (8 thường, 4 giá 0), tổng 87.650 khớp, tên file `NhapHang_BH01489_13112026.xlsx`.
