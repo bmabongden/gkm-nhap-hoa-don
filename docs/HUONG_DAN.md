@@ -1,4 +1,4 @@
-# GKM - Nhập Hóa Đơn 1.8.2: hướng dẫn ngắn
+# GKM - Nhập Hóa Đơn 1.8.3: hướng dẫn ngắn
 
 Ứng dụng Windows độc lập (portable): **không cần Python, API, khóa/token**; xử lý hóa đơn chạy hoàn toàn trên máy, chỉ nút **Cập nhật** mới dùng Internet. Mọi thứ nằm trong thư mục dự án (trong tài liệu này ghi `E:\GKM_HoaDonNhapHang` làm ví dụ; thư mục thật là nơi anh chép dự án, ví dụ `D:\Data AI\App nhap hang\Chuan\GKM_HoaDonNhapHang`).
 
@@ -31,7 +31,7 @@ Nhà cung cấp này hay gửi gộp cả chồng toa hàng trước đó trong 
 ## 4. Cập nhật app qua Internet
 1. Bấm nút **Cập nhật** ở góc trên. Lần đầu nhập tên kho GitHub chứa bản cập nhật (dạng `tên-tài-khoản/tên-kho`). Kho riêng tư thì mở mục "Kho riêng tư" và dán mã truy cập GitHub **chỉ đọc** (tạo ở GitHub, mục Fine-grained token, quyền Contents: Read-only chỉ cho đúng kho này). Mã được lưu nguyên văn trong `config\settings.json` trên máy, không được hiện lại trên màn hình.
 2. Bấm **Kiểm tra bản mới**. Nếu có, bấm **Cập nhật ngay**: app tải file mới, kiểm tra kích thước, mã SHA-256, dạng chương trình Windows và chạy thử `-version`; đạt hết mới thay file `.exe` (bản cũ giữ thành `GKM_NhapHoaDon.exe.old`, tự xóa ở lần mở sau) rồi tự khởi động lại. Hóa đơn đang mở mà chưa xuất sẽ bị bỏ khi khởi động lại, app có hỏi trước.
-3. Ô tên kho đã có sẵn `bmabongden/gkm-nhap-hoa-don` (kho riêng tư nên cần mã truy cập chỉ đọc). Nếu cập nhật lỗi, app giữ nguyên bản đang chạy; muốn quay về bản cũ thì đóng app, xóa `GKM_NhapHoaDon.exe` và đổi tên `GKM_NhapHoaDon.exe.old` về `GKM_NhapHoaDon.exe`.
+3. Ô tên kho đã có sẵn `bmabongden/gkm-nhap-hoa-don` (kho công khai nên không cần mã truy cập; chỉ việc bấm Kiểm tra bản mới). Nếu cập nhật lỗi, app giữ nguyên bản đang chạy; muốn quay về bản cũ thì đóng app, xóa `GKM_NhapHoaDon.exe` và đổi tên `GKM_NhapHoaDon.exe.old` về `GKM_NhapHoaDon.exe`.
 4. Phía người phát hành: sau `build\build.sh`, chạy `bash build/publish_update.sh "ghi chú"` để tạo `update\latest.json` và `update\GKM_NhapHoaDon.exe`, rồi commit và push hai file đó lên nhánh chính của kho. Chỉ ai có quyền ghi vào kho mới phát hành được bản mới, vì vậy hãy bảo vệ tài khoản GitHub.
 
 ## 5. Khi app báo lỗi
@@ -40,8 +40,10 @@ Nhà cung cấp này hay gửi gộp cả chồng toa hàng trước đó trong 
 | Chưa nhận biết mẫu / không tìm thấy dòng tiêu đề | Hóa đơn của nhà cung cấp mới, app không đoán. Chuyển file cho người hỗ trợ để thêm mẫu. |
 | File không phải Excel / hỏng / có mật khẩu | Mở bằng Excel kiểm tra, bỏ mật khẩu rồi thả lại. File `.xls` đời 97-2003 đọc được; `.xls` đời rất cũ (5.0/95) thì Lưu thành `.xlsx`. |
 | Lỗi dữ liệu (thiếu số lượng, đơn giá không đọc được) | Sửa trong hóa đơn gốc rồi thả lại. App không tự điền. |
-| Không tạo được thư mục (ổ E chưa cắm) | Cắm ổ E hoặc chọn thư mục khác. App không tự lưu sang ổ C. |
-| Cảnh báo "đơn giá nhỏ bất thường" | App không thấy ghi chú nghìn đồng trong hóa đơn nhưng đơn giá cao nhất dưới 1.000 đ. Kiểm tra hóa đơn gốc; nếu đúng là nghìn đồng, báo người hỗ trợ để thêm cách nhận ghi chú đó. |
+| Không tạo được thư mục | Ổ hoặc thư mục đó không còn; bấm **Chọn thư mục…** để chọn nơi khác. |
+| File này là file nhập hàng đã chuyển đổi | Anh thả nhầm file `NhapHang_...xlsx` app đã xuất. Bấm Làm mới rồi chọn file hóa đơn gốc. |
+| Cảnh báo "không kiểm chứng được đơn giá là giá gốc" | Hóa đơn có cột % giảm giá nhưng không có cột giá sau giảm và thành tiền không khớp. Xem hóa đơn gốc: nếu đơn giá đã trừ giảm giá rồi thì đừng xuất (sẽ bị trừ hai lần), báo người hỗ trợ. |
+| Cảnh báo "app hiểu hóa đơn ghi theo NGHÌN ĐỒNG" | Mọi đơn giá trên hóa đơn đều dưới 1.000 đ nên app đã nhân 1.000. Xem lại bảng đơn giá; đúng thì tích xác nhận rồi xuất. |
 | Cảnh báo đối chiếu tổng | Xem chi tiết, chỉ xuất khi đã tích xác nhận. |
 | "File có N bảng hóa đơn; app chỉ lấy bảng cuối cùng" | Bình thường với phiếu xuất kho NCC gộp nhiều toa. Kiểm tra bảng cuối đúng là hóa đơn cần nhập. |
 | Số lượng/đơn giá lớn vô lý, sheet kích thước bất thường | Ô bị nhập sai hoặc file hỏng; sửa trong hóa đơn gốc. |

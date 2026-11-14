@@ -18,7 +18,7 @@ import (
 	"gkm/internal/update"
 )
 
-const version = "1.8.2"
+const version = "1.8.3"
 
 //go:embed template.xlsx
 var embeddedTemplate []byte
@@ -179,7 +179,7 @@ func runSelfTest(lg *log.Logger, root, samples string) int {
 		lg.Printf("selftest mẫu %d ok=%v %s %v", r.N, r.OK, r.Summary, r.Problems)
 	}
 	if bad == 0 {
-		fmt.Println("Tất cả các mẫu đạt (Mẫu 1 khác kết quả cũ 1 ô mã PTXD0164; Mẫu 2 khác 80 ô tên hàng được điền; Mẫu 3 khớp; Mẫu 4 và 5 đọc đúng, tổng khớp).")
+		fmt.Println("Tất cả các mẫu đạt (Mẫu 1 khác kết quả cũ 1 ô mã PTXD0164; Mẫu 2 khác 80 ô tên hàng được điền; Mẫu 3 khớp; các mẫu từ 4 trở đi đọc đúng, tổng khớp).")
 		return 0
 	}
 	return 1

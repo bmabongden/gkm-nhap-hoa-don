@@ -127,7 +127,7 @@ func New(version string, template []byte, root string, pl Platform, lg *log.Logg
 	return a
 }
 
-// DefaultOutputDir là thư mục xuất mặc định (nằm trong thư mục dự án, ổ E trên Windows).
+// DefaultOutputDir là thư mục xuất mặc định (nằm trong thư mục dự án; chỉ dùng khi không biết thư mục chứa hóa đơn).
 func (a *App) DefaultOutputDir() string { return filepath.Join(a.Root, "output") }
 
 func (a *App) settingsPath() string { return filepath.Join(a.Root, "config", "settings.json") }
@@ -440,6 +440,9 @@ func readFile(name string, data []byte) (*core.Grid, string, string) {
 }
 
 func parseMsg(err error) string {
+	if errors.Is(err, core.ErrConverted) {
+		return "File này là file nhập hàng đã chuyển đổi, không phải hóa đơn của nhà cung cấp. Hãy bấm Làm mới rồi chọn file hóa đơn gốc."
+	}
 	return err.Error() + ". App không đoán dữ liệu nên dừng ở đây; hãy gửi file này cho người hỗ trợ để thêm mẫu mới."
 }
 
@@ -617,11 +620,7 @@ func (a *App) handleExport(w http.ResponseWriter, r *http.Request) {
 	cur.OutputDir = dir
 	a.saveSettings(cur)
 	a.Log.Printf("đã xuất %s (%d dòng) từ %q", path, len(rows), e.name)
-	warn := ""
-	if runtime.GOOS == "windows" && strings.HasPrefix(strings.ToUpper(path), "C:") {
-		warn = "File đang nằm trên ổ C. Mặc định của GKM là ổ E."
-	}
-	writeJSON(w, 200, map[string]any{"ok": true, "path": path, "name": filepath.Base(path), "rows": len(rows), "verified": true, "warning": warn})
+	writeJSON(w, 200, map[string]any{"ok": true, "path": path, "name": filepath.Base(path), "rows": len(rows), "verified": true})
 }
 
 func (a *App) handlePick(w http.ResponseWriter, r *http.Request) {

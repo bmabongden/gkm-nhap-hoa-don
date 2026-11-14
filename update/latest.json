@@ -1,6 +1,6 @@
 {
-  "version": "1.8.2",
-  "sha256": "079f3290342198e9fff6a9fbdfef0fe8760b51c01154a4e934b8d8d2dce166f9",
-  "size": 11949568,
-  "notes": "Bản 1.8.2: hóa đơn có giá gốc và % giảm giá thì nhập giá gốc và ghi % vào cột Giảm giá (%), không nhập thẳng giá đã trừ."
+  "version": "1.8.3",
+  "sha256": "3200ff75d2e36afcf79ae0492acd025e371dbcb4af96946d9d6702a96f2df646",
+  "size": 11953152,
+  "notes": "Bản 1.8.3 (rà soát toàn app): bỏ cảnh báo sai về ổ C; cảnh báo khi hóa đơn có % giảm giá mà không kiểm chứng được giá gốc; báo rõ khi thả nhầm file đã chuyển đổi."
 }

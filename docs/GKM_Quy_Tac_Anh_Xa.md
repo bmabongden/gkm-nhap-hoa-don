@@ -167,3 +167,10 @@ Khiêm báo (hóa đơn KiotViet "2.xlsx" và kết quả "2 done.xlsx"): sản 
 - Dòng giảm 100%: ghi giá gốc và 100% (thay vì đơn giá 0), xếp loại khuyến mại để xem trước dễ thấy.
 - Đối chiếu "Thành tiền dòng" chấp nhận thành tiền trước hoặc sau giảm giá. Giảm giá cấp hóa đơn (dòng "Giảm giá" dưới tổng) chỉ hiện để tham khảo.
 - Hóa đơn KiotViet: số hóa đơn lấy từ tên sheet "ChiTietHoaDon_HD…". **Mẫu 9** (`samples/Mau 9 - KiotViet don gia goc giam gia phan tram.xlsx`).
+
+## 16. Cập nhật 14/11/2026: rà soát toàn app (app 1.8.3)
+
+- Hóa đơn có cột % giảm giá: mỗi dòng giảm từ trên 0% đến dưới 100% phải kiểm chứng được đơn giá là giá gốc, bằng cột giá sau giảm (Giá NET) hoặc bằng thành tiền = SL × đơn giá × (100% - % giảm), sai số 0,5%. Không kiểm chứng được thì cảnh báo và bắt xác nhận (nguy cơ trừ hai lần).
+- File có dòng 1 đúng 7 tiêu đề của mẫu nhập hàng là file app đã xuất: báo lỗi, không coi là hóa đơn.
+- Bỏ cảnh báo ổ C/ổ E khi xuất.
+- **Còn chờ Khiêm quyết** (chưa đổi): (a) Mẫu 6 có cột "ĐG ĐÃ CK 22%": có ghi 22% vào cột Giảm giá (%) không; (b) chiết khấu cấp cả hóa đơn (Mẫu 3 "Tỷ lệ CK 5%", Mẫu 9 "Giảm giá 1.070.100") có chia vào từng dòng không.

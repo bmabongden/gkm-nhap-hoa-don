@@ -298,8 +298,8 @@ function render(){
   updateExportBtn();
   const res=$("result");
   if(f.done&&f.done.length){
-    const d=f.done,w=d.map(x=>x.warning).filter(Boolean)[0];
-    res.innerHTML='<div class="box ok"><b>Đã xuất xong '+(d.length>1?d.length+' file':'')+', đã mở lại file và kiểm tra: đạt.</b>'+d.map(x=>'<br><span class="path">'+esc(x.path)+'</span> <span class="muted">('+x.rows+' dòng)</span>').join("")+(w?'<br><b>'+esc(w)+'</b>':'')+'<div class="row" style="margin-top:8px"><button class="btn ghost" id="btnOpen">Mở thư mục chứa file</button></div></div>'+(f.error?'<div class="box bad">'+esc(f.error)+'</div>':'');
+    const d=f.done,w="";
+    res.innerHTML='<div class="box ok"><b>Đã xuất xong'+(d.length>1?' '+d.length+' file':'')+', đã mở lại file và kiểm tra: đạt.</b>'+d.map(x=>'<br><span class="path">'+esc(x.path)+'</span> <span class="muted">('+x.rows+' dòng)</span>').join("")+(w?'<br><b>'+esc(w)+'</b>':'')+'<div class="row" style="margin-top:8px"><button class="btn ghost" id="btnOpen">Mở thư mục chứa file</button></div></div>'+(f.error?'<div class="box bad">'+esc(f.error)+'</div>':'');
     const bo=$("btnOpen");if(state.cfg&&state.cfg.os!=="windows")bo.classList.add("hidden");
     bo.onclick=async()=>{const j=await post("/api/openfolder",{path:d[0].path});if(!j.ok)banner(j.error)};
   }else if(f.error){res.innerHTML='<div class="box bad">'+esc(f.error)+'</div>'}

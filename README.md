@@ -1,6 +1,6 @@
 # GKM_HoaDonNhapHang
 
-App Windows độc lập "GKM - Nhập Hóa Đơn" cho Gia Khánh Motor: kéo thả 1 hóa đơn Excel (.xlsx/.xls), xem trước, nút Làm mới, xuất file `.xlsx` đúng `MauFileNhapHang.xlsx`; tự xác định đơn vị đơn giá. Có nút Cập nhật online qua kho GitHub. File nhiều toa thì mỗi toa xuất một file. Đọc đúng số dù NCC dùng dấu . hay ,. Hóa đơn có % giảm giá thì nhập giá gốc kèm %. Bản chính thức 1.8.2 (sửa 14/11/2026).
+App Windows độc lập "GKM - Nhập Hóa Đơn" cho Gia Khánh Motor: kéo thả 1 hóa đơn Excel (.xlsx/.xls), xem trước, nút Làm mới, xuất file `.xlsx` đúng `MauFileNhapHang.xlsx`; tự xác định đơn vị đơn giá. Có nút Cập nhật online qua kho GitHub. File nhiều toa thì mỗi toa xuất một file. Đọc đúng số dù NCC dùng dấu . hay ,. Hóa đơn có % giảm giá thì nhập giá gốc kèm %. Bản chính thức 1.8.3 (rà soát 14/11/2026).
 
 - Dùng: chép thư mục này vào `E:\GKM_HoaDonNhapHang`, bấm đúp `app\GKM_NhapHoaDon.exe`. Xem `docs\HUONG_DAN.md`.
 - Kiểm tra: `app\KiemTraMau.bat`. Kết quả kiểm thử đã làm: `docs\KIEM_THU.md` (kèm phần chưa kiểm chứng trên Windows thật).

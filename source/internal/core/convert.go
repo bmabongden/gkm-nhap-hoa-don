@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"regexp"
@@ -287,6 +288,19 @@ func rowHasTotals(g *Grid, r int) bool {
 	return false
 }
 
+// ErrConverted: người dùng thả nhầm file nhập hàng app đã xuất.
+var ErrConverted = errors.New("file này là file nhập hàng đã chuyển đổi (đúng mẫu MauFileNhapHang), không phải hóa đơn của nhà cung cấp; hãy chọn file hóa đơn gốc")
+
+// isOutputFile: dòng 1 đúng 7 tiêu đề của mẫu nhập hàng thì đây là file app đã xuất, không phải hóa đơn.
+func isOutputFile(g *Grid) bool {
+	for i, h := range OutHeader {
+		if g.At(1, i+1).Num || strings.TrimSpace(g.At(1, i+1).S) != h {
+			return false
+		}
+	}
+	return g.At(1, len(OutHeader)+1).Empty()
+}
+
 // Parse phân tích hóa đơn với lựa chọn mặc định.
 func Parse(g *Grid) (*Parsed, error) { return ParseWith(g, Options{}) }
 
@@ -294,6 +308,9 @@ func Parse(g *Grid) (*Parsed, error) { return ParseWith(g, Options{}) }
 func ParseWith(g *Grid, opt Options) (*Parsed, error) {
 	if g.MaxRow > maxGridRows || g.MaxCol > maxGridCols {
 		return nil, fmt.Errorf("sheet có kích thước bất thường (%d dòng, %d cột), không phải hóa đơn bình thường; có thể file bị hỏng", g.MaxRow, g.MaxCol)
+	}
+	if isOutputFile(g) {
+		return nil, ErrConverted
 	}
 	hr, canon, raw := findHeader(g)
 	if hr == 0 {
@@ -497,6 +514,41 @@ func ParseWith(g *Grid, opt Options) (*Parsed, error) {
 			}
 			p.Scale = 1000
 			p.Warnings = append(p.Warnings, fmt.Sprintf("Đơn giá cao nhất trên hóa đơn chỉ là %s nên app hiểu hóa đơn ghi theo NGHÌN ĐỒNG (phần mềm của nhà cung cấp bỏ 3 số 0 hoặc nhầm dấu . và ,) và đã nhân 1.000 khi xuất (ví dụ %s thành %s đ). Hãy xem lại đơn giá trong bảng bên dưới.", vnNum(maxP), vnNum(maxP), vnNum(maxP*1000)))
+		}
+	}
+	// Kiểm chứng "đơn giá là giá gốc, chưa trừ % giảm": phải khớp với cột giá sau giảm (Giá NET) hoặc với thành tiền đã trừ.
+	// Không kiểm chứng được thì cảnh báo, vì nếu đơn giá trên hóa đơn đã trừ rồi mà vẫn ghi % thì nhập kho sẽ bị trừ hai lần.
+	if cm.ck > 0 {
+		var unsure []string
+		for _, it := range p.Items {
+			ck, ok := it.CK.Float()
+			if it.Kind != KindNormal || !ok || ck <= 0 || ck >= 100 {
+				continue
+			}
+			pr, pok := parseMoney(it.PriceRaw)
+			if !pok || pr == 0 {
+				continue
+			}
+			want := pr * (1 - ck/100)
+			tol := math.Max(1, want*0.005)
+			verified := false
+			if net, ok := it.Net.Float(); ok && math.Abs(net-want) <= tol {
+				verified = true
+			}
+			if q, qok := it.Qty.Float(); qok && q != 0 {
+				if a, aok := it.Amount.Float(); aok && math.Abs(a/q-want) <= tol {
+					verified = true
+				}
+			}
+			if !verified {
+				unsure = append(unsure, it.STT)
+			}
+		}
+		if len(unsure) > 0 {
+			if len(unsure) > 8 {
+				unsure = append(unsure[:8], "...")
+			}
+			p.Warnings = append(p.Warnings, fmt.Sprintf("Hóa đơn có cột %% giảm giá nhưng app không kiểm chứng được đơn giá là giá gốc (chưa trừ) ở dòng STT %s: không có cột giá sau giảm, và thành tiền không bằng SL × đơn giá × (100%% - %% giảm). Nếu đơn giá trên hóa đơn đã trừ giảm giá rồi thì đừng xuất file này (sẽ bị trừ hai lần); hãy báo người hỗ trợ.", strings.Join(unsure, ", ")))
 		}
 	}
 	frac := 0

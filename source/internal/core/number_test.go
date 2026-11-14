@@ -1,6 +1,9 @@
 package core
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 // Số dạng chữ từ nhiều phần mềm: dấu . và , có thể là phân cách nghìn hoặc dấu thập phân (Khiêm báo lỗi 14/11/2026).
 func TestParseVNNumber(t *testing.T) {
@@ -97,5 +100,65 @@ func TestOriginalPriceWithPercentDiscount(t *testing.T) {
 		if c.Level != LevelOK {
 			t.Fatalf("đối chiếu %s lệch: %s", c.Name, c.Detail)
 		}
+	}
+}
+
+func discountGrid(amount string) *Grid {
+	g := newGrid("Sheet1")
+	hdr := []string{"STT", "Mã hàng", "Tên hàng", "Số lượng", "Đơn giá", "Giảm giá %", "Thành tiền"}
+	for c, h := range hdr {
+		g.Cells[[2]int{1, c + 1}] = Cell{S: h}
+	}
+	num := func(s string) Cell { return Cell{S: s, Num: true} }
+	row := []Cell{num("1"), {S: "A1"}, {S: "Nhông"}, num("2"), num("100000"), num("10"), num(amount)}
+	for c, v := range row {
+		g.Cells[[2]int{2, c + 1}] = v
+	}
+	g.Cells[[2]int{3, 1}] = Cell{S: "Tổng tiền hàng"}
+	g.Cells[[2]int{3, 7}] = num(amount)
+	g.MaxRow, g.MaxCol = 3, len(hdr)
+	return g
+}
+
+func hasWarning(p *Parsed, sub string) bool {
+	for _, w := range p.Warnings {
+		if strings.Contains(w, sub) {
+			return true
+		}
+	}
+	return false
+}
+
+// Thành tiền đã trừ % (2 × 100.000 × 90% = 180.000): chắc chắn đơn giá là giá gốc, không cảnh báo.
+// Thành tiền chưa trừ (200.000) và không có cột giá sau giảm: không kiểm chứng được, phải cảnh báo.
+func TestDiscountVerification(t *testing.T) {
+	p, err := Parse(discountGrid("180000"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hasWarning(p, "không kiểm chứng được") {
+		t.Fatalf("không được cảnh báo khi thành tiền khớp giá sau giảm: %v", p.Warnings)
+	}
+	p, err = Parse(discountGrid("200000"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasWarning(p, "không kiểm chứng được") || p.OutputRows()[0].CK.S != "10" {
+		t.Fatalf("phải cảnh báo khi không kiểm chứng được giá gốc: %v", p.Warnings)
+	}
+}
+
+// Thả nhầm file nhập hàng đã chuyển đổi: báo lỗi rõ ràng, không coi là hóa đơn.
+func TestRejectAlreadyConvertedFile(t *testing.T) {
+	g := newGrid("PurchaseOrderTemplate")
+	for c, h := range OutHeader {
+		g.Cells[[2]int{1, c + 1}] = Cell{S: h}
+	}
+	g.Cells[[2]int{2, 1}] = Cell{S: "A1"}
+	g.Cells[[2]int{2, 4}] = Cell{S: "1000", Num: true}
+	g.Cells[[2]int{2, 7}] = Cell{S: "2", Num: true}
+	g.MaxRow, g.MaxCol = 2, 7
+	if _, err := ParseAll(g, Options{}); err == nil || !strings.Contains(err.Error(), "đã chuyển đổi") {
+		t.Fatalf("phải từ chối file đã chuyển đổi: %v", err)
 	}
 }
