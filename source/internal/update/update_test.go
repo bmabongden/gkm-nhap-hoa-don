@@ -2,6 +2,7 @@ package update
 
 import (
 	"context"
+	"crypto/ed25519"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -13,22 +14,20 @@ import (
 	"testing"
 )
 
+// khóa thử nghiệm cố định (không phải khóa thật của app)
+var testPriv = ed25519.NewKeyFromSeed([]byte("gkm-test-seed-0123456789abcdefgh"))
+
 func fakeExe(tag string) []byte { return append([]byte("MZ"), []byte(strings.Repeat(tag, 50))...) }
 
 type fakeRepo struct {
 	manifest map[string]any
 	exe      []byte
-	token    string // nếu khác rỗng thì bắt buộc gửi đúng mã
 	seenAuth string
 }
 
 func (f *fakeRepo) handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		f.seenAuth = r.Header.Get("Authorization")
-		if f.token != "" && f.seenAuth != "Bearer "+f.token {
-			w.WriteHeader(404) // GitHub trả 404 cho kho riêng tư khi thiếu quyền
-			return
-		}
 		switch r.URL.Path {
 		case "/repos/acme/gkm/contents/update/latest.json":
 			_ = json.NewEncoder(w).Encode(f.manifest)
@@ -51,13 +50,14 @@ func setup(t *testing.T, cur string, f *fakeRepo, cfg Config) (*Updater, string)
 	}
 	u := &Updater{Current: cur, BaseURL: srv.URL, Cfg: func() Config { return cfg },
 		ExePath: func() (string, error) { return exe, nil },
-		Smoke:   func(path, want string) error { return nil }}
+		Smoke:   func(path, want string) error { return nil }, PublicKey: testPriv.Public().(ed25519.PublicKey)}
 	return u, exe
 }
 
 func manifestFor(ver string, exe []byte) map[string]any {
 	h := sha256.Sum256(exe)
-	return map[string]any{"version": ver, "sha256": hex.EncodeToString(h[:]), "size": len(exe), "notes": "ghi chú"}
+	sha := hex.EncodeToString(h[:])
+	return map[string]any{"version": ver, "sha256": sha, "size": len(exe), "notes": "ghi chú", "sig": Sign(testPriv, ver, sha, int64(len(exe)))}
 }
 
 func TestNewer(t *testing.T) {
@@ -185,19 +185,53 @@ func TestNotPE(t *testing.T) {
 	}
 }
 
-func TestPrivateRepoNeedsToken(t *testing.T) {
+// Bản cập nhật không có chữ ký, chữ ký của khóa khác, hoặc latest.json bị sửa sau khi ký: app không được cài.
+func TestSignatureRequired(t *testing.T) {
 	e := fakeExe("new")
-	f := &fakeRepo{manifest: manifestFor("1.6.0", e), exe: e, token: "ghp_test"}
-	u, _ := setup(t, "1.5.0", f, Config{Repo: "acme/gkm"})
-	if _, err := u.Check(context.Background()); err == nil || !strings.Contains(err.Error(), "mã truy cập") {
-		t.Fatalf("thiếu mã phải báo lỗi dễ hiểu: %v", err)
+	other := ed25519.NewKeyFromSeed([]byte("ke-gian-seed-0123456789abcdefghi"))
+	good := manifestFor("1.6.0", e)
+	cases := map[string]map[string]any{}
+	m := manifestFor("1.6.0", e)
+	delete(m, "sig")
+	cases["thiếu chữ ký"] = m
+	m = manifestFor("1.6.0", e)
+	m["sig"] = Sign(other, "1.6.0", m["sha256"].(string), int64(len(e)))
+	cases["khóa lạ"] = m
+	m = manifestFor("1.6.0", e)
+	m["version"] = "1.7.0"
+	cases["sửa phiên bản sau khi ký"] = m
+	m = manifestFor("1.6.0", e)
+	m["sig"] = "!!!"
+	cases["chữ ký hỏng"] = m
+	for name, man := range cases {
+		t.Run(name, func(t *testing.T) {
+			u, exe := setup(t, "1.5.0", &fakeRepo{manifest: man, exe: e}, Config{Repo: "acme/gkm"})
+			if _, err := u.Check(context.Background()); err == nil || !strings.Contains(err.Error(), "chữ ký") {
+				t.Fatalf("phải từ chối: %v", err)
+			}
+			// gọi thẳng Download với thông tin giả cũng phải bị chặn
+			info := &Info{Version: man["version"].(string), SHA256: man["sha256"].(string), Size: int64(len(e)), Newer: true}
+			if s, ok := man["sig"].(string); ok {
+				info.Sig = s
+			}
+			if _, err := u.Download(context.Background(), info); err == nil {
+				t.Fatal("Download phải từ chối bản không có chữ ký hợp lệ")
+			}
+			if b, _ := os.ReadFile(exe); string(b) != string(fakeExe("old")) {
+				t.Fatal("file đang chạy bị đụng")
+			}
+		})
 	}
-	u2, _ := setup(t, "1.5.0", f, Config{Repo: "acme/gkm", Token: "ghp_test"})
-	if _, err := u2.Check(context.Background()); err != nil {
+	u, _ := setup(t, "1.5.0", &fakeRepo{manifest: good, exe: e}, Config{Repo: "acme/gkm"})
+	if info, err := u.Check(context.Background()); err != nil || !info.Newer {
+		t.Fatalf("bản ký đúng phải cài được: %v", err)
+	}
+}
+
+// Khóa công khai nhúng trong app phải đọc được.
+func TestEmbeddedPublicKey(t *testing.T) {
+	if _, err := (&Updater{}).pubKey(); err != nil {
 		t.Fatal(err)
-	}
-	if f.seenAuth != "Bearer ghp_test" {
-		t.Fatalf("tiêu đề Authorization sai: %q", f.seenAuth)
 	}
 }
 

@@ -162,3 +162,53 @@ func TestRejectAlreadyConvertedFile(t *testing.T) {
 		t.Fatalf("phải từ chối file đã chuyển đổi: %v", err)
 	}
 }
+
+// Chiết khấu cả hóa đơn: ghi % thì chia đúng % đó; ghi số tiền thì đổi ra % trên tổng tiền hàng; dòng đã có % riêng thì gộp.
+func TestSpreadInvoiceDiscount(t *testing.T) {
+	mk := func(label, val string) *Grid {
+		g := newGrid("Sheet1")
+		hdr := []string{"STT", "Mã hàng", "Tên hàng", "Số lượng", "Đơn giá", "Thành tiền"}
+		for c, h := range hdr {
+			g.Cells[[2]int{1, c + 1}] = Cell{S: h}
+		}
+		num := func(s string) Cell { return Cell{S: s, Num: true} }
+		rows := [][]Cell{
+			{num("1"), {S: "A1"}, {S: "Nhông"}, num("2"), num("100000"), num("200000")},
+			{num("2"), {S: "A2"}, {S: "Sên"}, num("1"), num("300000"), num("300000")},
+			{num("3"), {S: "A3"}, {S: "Quà tặng"}, num("1"), num("0"), num("0")},
+		}
+		for i, r := range rows {
+			for c, v := range r {
+				g.Cells[[2]int{i + 2, c + 1}] = v
+			}
+		}
+		g.Cells[[2]int{5, 2}] = Cell{S: "Tổng tiền hàng:"}
+		g.Cells[[2]int{5, 6}] = num("500000")
+		g.Cells[[2]int{6, 2}] = Cell{S: label}
+		g.Cells[[2]int{6, 3}] = Cell{S: val, Num: !strings.Contains(val, "%")}
+		g.MaxRow, g.MaxCol = 6, len(hdr)
+		return g
+	}
+	p, err := Parse(mk("Tỷ lệ CK:", "5 %"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := p.OutputRows()
+	if p.InvoiceCK != 5 || out[0].CK.S != "5" || out[1].CK.S != "5" || !out[2].CK.Empty() {
+		t.Fatalf("chia 5%%: %v %q %q %q", p.InvoiceCK, out[0].CK.S, out[1].CK.S, out[2].CK.S)
+	}
+	p, err = Parse(mk("Chiết khấu:", "25000"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out = p.OutputRows(); p.InvoiceCK != 5 || out[0].CK.S != "5" || hasWarning(p, "lệch") {
+		t.Fatalf("25.000/500.000 phải là 5%% không lệch: %v %q %v", p.InvoiceCK, out[0].CK.S, p.Warnings)
+	}
+	p, err = Parse(mk("Chiết khấu:", "25123"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasWarning(p, "lệch") {
+		t.Fatalf("25.123 đổi ra 5,02%% thì phải cảnh báo lệch làm tròn: %v %v", p.InvoiceCK, p.Warnings)
+	}
+}

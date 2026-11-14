@@ -18,7 +18,7 @@ import (
 	"gkm/internal/update"
 )
 
-const version = "1.8.3"
+const version = "1.9.0"
 
 //go:embed template.xlsx
 var embeddedTemplate []byte
@@ -168,9 +168,12 @@ func runSelfTest(lg *log.Logger, root, samples string) int {
 	}
 	fmt.Println("GKM - kiểm tra các mẫu, thư mục mẫu:", samples)
 	res := core.RunSelfTest(func(n string) ([]byte, error) { return os.ReadFile(filepath.Join(samples, n)) }, embeddedTemplate)
-	bad := 0
+	bad, skipped := 0, 0
 	for _, r := range res {
-		if r.OK {
+		if r.Skipped {
+			skipped++
+			fmt.Println("BỎ QUA", r.Summary)
+		} else if r.OK {
 			fmt.Println("ĐẠT  ", r.Summary)
 		} else {
 			bad++
@@ -179,7 +182,10 @@ func runSelfTest(lg *log.Logger, root, samples string) int {
 		lg.Printf("selftest mẫu %d ok=%v %s %v", r.N, r.OK, r.Summary, r.Problems)
 	}
 	if bad == 0 {
-		fmt.Println("Tất cả các mẫu đạt (Mẫu 1 khác kết quả cũ 1 ô mã PTXD0164; Mẫu 2 khác 80 ô tên hàng được điền; Mẫu 3 khớp; các mẫu từ 4 trở đi đọc đúng, tổng khớp).")
+		fmt.Println("Tất cả các mẫu đã kiểm tra đều đạt (Mẫu 1 khác kết quả cũ 1 ô mã PTXD0164; Mẫu 2 khác 80 ô tên hàng được điền; Mẫu 3 khác 37 ô cột Giảm giá (%) do chia chiết khấu 5% của cả hóa đơn; các mẫu từ 4 trở đi đọc đúng, tổng khớp).")
+		if skipped > 0 {
+			fmt.Printf("Lưu ý: %d mục BỎ QUA vì thư mục samples thiếu file mẫu, các mục đó chưa được kiểm tra.\n", skipped)
+		}
 		return 0
 	}
 	return 1

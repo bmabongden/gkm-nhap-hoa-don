@@ -8,6 +8,8 @@ logs/*
 output/*
 !output/.gitkeep
 config/settings.json
+config/da_xuat.json
+*.key
 config/browser-profile/
 *.new
 *.old

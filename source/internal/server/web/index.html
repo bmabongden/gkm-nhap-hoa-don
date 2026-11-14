@@ -82,12 +82,8 @@ details summary{cursor:pointer;color:var(--muted)}
 
   <section class="card hidden" id="updPanel" aria-labelledby="hu">
     <h2 id="hu">Cập nhật ứng dụng</h2>
-    <div class="muted">Chỉ cần Internet khi bấm kiểm tra. Xử lý hóa đơn vẫn chạy hoàn toàn trên máy này. Bản mới được kiểm tra mã SHA-256 trước khi cài, bản cũ giữ lại thành GKM_NhapHoaDon.exe.old.</div>
+    <div class="muted">Chỉ cần Internet khi bấm kiểm tra. Xử lý hóa đơn vẫn chạy hoàn toàn trên máy này. Bản mới phải có chữ ký số của Gia Khánh Motor và đúng mã SHA-256 mới được cài, bản cũ giữ lại thành GKM_NhapHoaDon.exe.old.</div>
     <div class="row"><label for="updRepo" class="small">Kho GitHub chứa bản cập nhật</label><input type="text" id="updRepo" placeholder="tên-tài-khoản/tên-kho" spellcheck="false" autocomplete="off"></div>
-    <details><summary>Kho riêng tư: nhập mã truy cập chỉ đọc (không cần nếu kho công khai)</summary>
-      <div class="row" style="margin-top:8px"><input type="password" id="updToken" placeholder="mã truy cập GitHub chỉ đọc" autocomplete="off" style="flex:1 1 320px;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)"><span class="muted small" id="tokState"></span></div>
-      <div class="muted small" style="margin-top:4px">Mã được lưu nguyên văn (không mã hóa) trong config\settings.json trên máy này. Chỉ nên dùng mã chỉ đọc cho đúng kho này.</div>
-    </details>
     <div class="row"><button class="btn ghost" id="btnUpdCheck">Kiểm tra bản mới</button><button class="btn" id="btnUpdApply" disabled>Cập nhật ngay</button></div>
     <div id="updMsg" aria-live="polite"></div>
   </section>
@@ -145,7 +141,6 @@ async function init(){
     if(!c.rootExists)banner("Không tìm thấy thư mục dự án "+c.root+". Có thể ổ chứa dự án chưa cắm. App vẫn chạy, nhưng hãy chọn thư mục xuất bằng nút \"Chọn thư mục…\". App không tự lưu sang ổ C.");
     if(c.os!=="windows")$("btnPick").classList.add("hidden");
     $("updRepo").value=c.updateRepo||"";
-    $("tokState").textContent=c.hasUpdateToken?"Đã lưu mã":"";
     if(c.updateRepo)updCheck(true); // kiểm tra âm thầm khi mở app; lỗi mạng thì bỏ qua
   }catch(e){banner(e.message)}
   setInterval(()=>fetch("/api/ping").catch(()=>{}),3000);
@@ -159,10 +154,8 @@ function updMsg(cls,t){$("updMsg").innerHTML=t?'<div class="box '+cls+'">'+t+'</
 $("btnUpd").addEventListener("click",()=>$("updPanel").classList.toggle("hidden"));
 async function saveUpdCfg(){
   const body={updateRepo:$("updRepo").value.trim()};
-  if($("updToken").value.trim())body.updateToken=$("updToken").value.trim();
   const c=await post("/api/config",body);
   if(!c.ok)throw new Error(c.error);
-  $("updToken").value="";$("tokState").textContent=c.hasUpdateToken?"Đã lưu mã":"";
   state.cfg=c;
 }
 async function updCheck(silent){
@@ -267,12 +260,13 @@ function render(){
   let h='';
   if(all.length>1){
     h+='<div class="box ok">File này có <b>'+all.length+' toa hàng</b>, app xuất mỗi toa ra <b>một file riêng</b>. Bấm từng toa để xem trước.</div>';
-    h+='<div class="filters" role="tablist" aria-label="Chọn toa">'+all.map((x,i)=>'<button class="fbtn pbtn" role="tab" data-p="'+i+'" aria-pressed="'+(x===r)+'">Toa '+(i+1)+' · '+esc(x.part)+' · '+x.rows+' dòng'+(x.errors.length?' · có lỗi':x.needConfirm?' · cần xem':'')+'</button>').join("")+'</div>';
+    h+='<div class="filters" role="tablist" aria-label="Chọn toa">'+all.map((x,i)=>'<button class="fbtn pbtn" role="tab" data-p="'+i+'" aria-pressed="'+(x===r)+'">Toa '+(i+1)+' · '+esc(x.part)+' · '+x.rows+' dòng'+(x.errors.length?' · có lỗi':x.duplicate?' · đã xuất rồi':x.needConfirm?' · cần xem':'')+'</button>').join("")+'</div>';
   }
   h+='<div class="stats"><div><b>'+r.rows+'</b><span>dòng sản phẩm</span></div><div><b>'+r.normal+'</b><span>hàng thường</span></div><div><b>'+r.promo+'</b><span>hàng khuyến mại</span></div><div><b>'+r.exchange+'</b><span>hàng đổi/bảo hành (giá 0)</span></div><div><b>'+r.excluded+'</b><span>dòng bỏ (không có số lượng)</span></div></div>';
   h+='<div class="row"><span class="pill '+(r.known?"ok":"warn")+'">'+(r.known?"Đã nhận biết mẫu":"Mẫu mới, cần kiểm tra")+'</span><span>'+esc(r.profileName)+'</span></div>';
   h+='<div class="muted">Số phiếu: <b>'+esc(r.so||"không có")+'</b> · Ngày: <b>'+esc(r.ngay||"không có")+'</b> · File chuyển đổi: <span class="path">'+esc(r.suggestedName)+'</span></div>';
   if(r.scaleNote)h+='<div class="muted">Đơn giá được hiểu là <b>nghìn đồng</b> (nhân 1.000) vì hóa đơn ghi: <i>'+esc(r.scaleNote)+'</i></div>';
+  if(r.duplicate)h+='<div class="box bad"><b>Hóa đơn này đã xuất rồi</b> (lúc '+esc(r.duplicate.at)+', file <span class="path">'+esc(r.duplicate.path)+'</span>). Nếu đã nhập kho thì đừng xuất lại kẻo nhập trùng; chắc chắn muốn xuất lại thì tích ô xác nhận ở Bước 3.</div>';
   if(r.errors.length)h+='<div class="box bad"><b>Lỗi cần sửa trong hóa đơn gốc trước khi xuất:</b><ul class="list">'+r.errors.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>';
   if(r.warnings.length)h+='<div class="box warn"><b>Cảnh báo:</b><ul class="list">'+r.warnings.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></div>';
   h+='<div><h2>Đối chiếu với hóa đơn</h2><ul class="list" style="margin-top:6px">'+r.checks.map(c=>'<li><span class="pill '+(c.level==="ok"?"ok":c.level==="warn"?"warn":"bad")+'">'+(c.level==="ok"?"Khớp":"Lưu ý")+'</span><span>'+esc(c.name)+': <span class="muted">'+esc(c.detail)+'</span></span></li>').join("")+'</ul></div>';

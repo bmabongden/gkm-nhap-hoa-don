@@ -111,6 +111,8 @@ type Parsed struct {
 	PartOf int
 	// NameSuffix thêm vào tên file khi hai toa trong cùng file trùng tên.
 	NameSuffix string
+	// InvoiceCK là % chiết khấu cả hóa đơn đã chia vào cột Giảm giá (%) của từng dòng (0 nếu không có).
+	InvoiceCK float64
 }
 
 // OutRow là một dòng của file nhập hàng (A..G).
@@ -579,6 +581,12 @@ func ParseWith(g *Grid, opt Options) (*Parsed, error) {
 	if p.Profile == ProfileD || p.Profile == ProfileX {
 		p.Meta.Tail = readTail(g, stopRow)
 	}
+	if p.Profile == ProfileF {
+		applyNetPercent(g, p, hr)
+	}
+	if p.Profile == ProfileC || p.Profile == ProfileE || p.Profile == ProfileX {
+		spreadInvoiceDiscount(g, p, stopRow)
+	}
 	p.Checks = check(p)
 	return p, nil
 }
@@ -837,6 +845,9 @@ func check(p *Parsed) []Check {
 			pr, pok := parseMoney(it.PriceRaw)
 			a, aok := it.Amount.Float()
 			ck, _ := it.CK.Float() // thành tiền có thể đã trừ % giảm giá (KiotViet) hoặc chưa (AMIS)
+			if p.InvoiceCK > 0 {   // bỏ phần chiết khấu cả hóa đơn đã gộp vào để còn % riêng của dòng
+				ck = (1 - (1-ck/100)/(1-p.InvoiceCK/100)) * 100
+			}
 			if !qok || !pok || !aok || (math.Abs(q*pr-a) > 0.5 && math.Abs(q*pr*(1-ck/100)-a) > 0.5) {
 				bad = append(bad, it.STT)
 			}
@@ -932,7 +943,7 @@ func check(p *Parsed) []Check {
 			break
 		}
 		add("Tổng tiền hàng", math.Abs(sumAmt-*m.TongTienHang) < 0.5, fmt.Sprintf("tính %s / hóa đơn %s", vnNum(sumAmt), vnNum(*m.TongTienHang)))
-		if m.ChietKhau != nil {
+		if m.ChietKhau != nil && p.InvoiceCK == 0 {
 			res = append(res, Check{"Chiết khấu cấp hóa đơn", LevelOK, fmt.Sprintf("hóa đơn có CK %s; mẫu nhập hàng không có chỗ cho CK cấp hóa đơn nên không đưa vào dòng", vnNum(*m.ChietKhau))})
 		}
 	}

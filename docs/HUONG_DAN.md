@@ -1,4 +1,4 @@
-# GKM - Nhập Hóa Đơn 1.8.3: hướng dẫn ngắn
+# GKM - Nhập Hóa Đơn 1.9.0: hướng dẫn ngắn
 
 Ứng dụng Windows độc lập (portable): **không cần Python, API, khóa/token**; xử lý hóa đơn chạy hoàn toàn trên máy, chỉ nút **Cập nhật** mới dùng Internet. Mọi thứ nằm trong thư mục dự án (trong tài liệu này ghi `E:\GKM_HoaDonNhapHang` làm ví dụ; thư mục thật là nơi anh chép dự án, ví dụ `D:\Data AI\App nhap hang\Chuan\GKM_HoaDonNhapHang`).
 
@@ -25,14 +25,16 @@ Nhà cung cấp này hay gửi gộp cả chồng toa hàng trước đó trong 
 - Hóa đơn có giá gốc và % giảm giá (ví dụ KiotViet: Đơn giá, Giảm giá %, Giá bán): cột Đơn giá ghi **giá gốc**, cột Giảm giá (%) ghi **% giảm** như hóa đơn, không nhập thẳng giá đã trừ (từ 1.8.2). Dòng giảm 100% vẫn ghi giá gốc và 100%. Dòng giảm 0% để trống cột giảm giá.
 - Mã hàng giữ nguyên như hóa đơn (kể cả số 0 đầu), không có quy tắc riêng cho hàng "ốc".
 - Điền tên hàng. Không giảm giá thì để trống. Dòng chỉ có số lượng (hàng đổi, bảo hành, khuyến mại) ghi đơn giá 0. Dòng có giá mà không có số lượng thì bỏ.
-- Chiết khấu cấp hóa đơn và thuế suất không đưa vào file (mẫu nhập hàng không có chỗ cho chúng).
+- Chiết khấu cả hóa đơn (ví dụ "Tỷ lệ CK 5%" hay dòng "Giảm giá 1.070.100" dưới tổng) được chia đều vào cột Giảm giá (%) của từng dòng (từ 1.9.0). Dòng đã có % riêng thì gộp hai mức: 10% rồi 3,5% thành 13,15%. Chiết khấu ghi bằng số tiền được đổi ra %, làm tròn 2 chữ số; lệch vài đồng thì app báo số đồng lệch.
+- Phiếu xuất kho có cột "ĐG ĐÃ CK 22%" (Mẫu 6): ghi 22% vào cột Giảm giá (%) của từng dòng (từ 1.9.0); app đối chiếu với cột giá đã chiết khấu, lệch thì cảnh báo.
+- Thuế suất không đưa vào file (mẫu nhập hàng không có chỗ).
 - Chi tiết: `docs\GKM_Quy_Tac_Anh_Xa.md`.
 
 ## 4. Cập nhật app qua Internet
-1. Bấm nút **Cập nhật** ở góc trên. Lần đầu nhập tên kho GitHub chứa bản cập nhật (dạng `tên-tài-khoản/tên-kho`). Kho riêng tư thì mở mục "Kho riêng tư" và dán mã truy cập GitHub **chỉ đọc** (tạo ở GitHub, mục Fine-grained token, quyền Contents: Read-only chỉ cho đúng kho này). Mã được lưu nguyên văn trong `config\settings.json` trên máy, không được hiện lại trên màn hình.
-2. Bấm **Kiểm tra bản mới**. Nếu có, bấm **Cập nhật ngay**: app tải file mới, kiểm tra kích thước, mã SHA-256, dạng chương trình Windows và chạy thử `-version`; đạt hết mới thay file `.exe` (bản cũ giữ thành `GKM_NhapHoaDon.exe.old`, tự xóa ở lần mở sau) rồi tự khởi động lại. Hóa đơn đang mở mà chưa xuất sẽ bị bỏ khi khởi động lại, app có hỏi trước.
-3. Ô tên kho đã có sẵn `bmabongden/gkm-nhap-hoa-don` (kho công khai nên không cần mã truy cập; chỉ việc bấm Kiểm tra bản mới). Nếu cập nhật lỗi, app giữ nguyên bản đang chạy; muốn quay về bản cũ thì đóng app, xóa `GKM_NhapHoaDon.exe` và đổi tên `GKM_NhapHoaDon.exe.old` về `GKM_NhapHoaDon.exe`.
-4. Phía người phát hành: sau `build\build.sh`, chạy `bash build/publish_update.sh "ghi chú"` để tạo `update\latest.json` và `update\GKM_NhapHoaDon.exe`, rồi commit và push hai file đó lên nhánh chính của kho. Chỉ ai có quyền ghi vào kho mới phát hành được bản mới, vì vậy hãy bảo vệ tài khoản GitHub.
+1. Bấm nút **Cập nhật** ở góc trên. Ô tên kho GitHub có sẵn `bmabongden/gkm-nhap-hoa-don` (kho công khai, không cần mã truy cập; từ 1.9.0 đã bỏ ô dán mã GitHub).
+2. Bấm **Kiểm tra bản mới**. Nếu có, bấm **Cập nhật ngay**: app tải file mới, kiểm tra **chữ ký số của Gia Khánh Motor** (từ 1.9.0; bản không có chữ ký hoặc chữ ký sai bị từ chối, kể cả khi ai đó sửa được kho GitHub), kích thước, mã SHA-256, dạng chương trình Windows và chạy thử `-version`; đạt hết mới thay file `.exe` (bản cũ giữ thành `GKM_NhapHoaDon.exe.old`, tự xóa ở lần mở sau) rồi tự khởi động lại. Hóa đơn đang mở mà chưa xuất sẽ bị bỏ khi khởi động lại, app có hỏi trước.
+3. Nếu cập nhật lỗi, app giữ nguyên bản đang chạy; muốn quay về bản cũ thì đóng app, xóa `GKM_NhapHoaDon.exe` và đổi tên `GKM_NhapHoaDon.exe.old` về `GKM_NhapHoaDon.exe`.
+4. Phía người phát hành: sau `build\build.sh`, chạy `bash build/publish_update.sh "ghi chú"` để tạo `update\latest.json` và `update\GKM_NhapHoaDon.exe`, rồi commit và push hai file đó lên nhánh chính của kho. Lệnh này ký bản cập nhật bằng file khóa bí mật `gkm_update_ed25519.key` (biến `GKM_SIGN_KEY`, mặc định nằm trong thư mục dự án chung `GKM/khoa_ky_cap_nhat/`). **Không bao giờ đưa file khóa lên GitHub**; sao lưu nó ra USB. Mất khóa thì phải tạo khóa mới và cài tay bản mới trên từng máy. Vẫn nên bật đăng nhập hai bước cho tài khoản GitHub.
 
 ## 5. Khi app báo lỗi
 | Thông báo | Cách xử lý |
@@ -42,6 +44,8 @@ Nhà cung cấp này hay gửi gộp cả chồng toa hàng trước đó trong 
 | Lỗi dữ liệu (thiếu số lượng, đơn giá không đọc được) | Sửa trong hóa đơn gốc rồi thả lại. App không tự điền. |
 | Không tạo được thư mục | Ổ hoặc thư mục đó không còn; bấm **Chọn thư mục…** để chọn nơi khác. |
 | File này là file nhập hàng đã chuyển đổi | Anh thả nhầm file `NhapHang_...xlsx` app đã xuất. Bấm Làm mới rồi chọn file hóa đơn gốc. |
+| Hóa đơn này đã xuất rồi | App nhớ các hóa đơn đã xuất (`config\da_xuat.json`). Thả lại cùng hóa đơn thì báo lúc nào, ra file nào. Nếu đúng là xuất lại có chủ ý thì tích ô xác nhận rồi xuất; không thì bấm Làm mới. |
+| Cập nhật báo "không có chữ ký số hợp lệ" | Bản trên GitHub không do Gia Khánh Motor ký. Đừng cài; báo người hỗ trợ kiểm tra tài khoản GitHub. |
 | Cảnh báo "không kiểm chứng được đơn giá là giá gốc" | Hóa đơn có cột % giảm giá nhưng không có cột giá sau giảm và thành tiền không khớp. Xem hóa đơn gốc: nếu đơn giá đã trừ giảm giá rồi thì đừng xuất (sẽ bị trừ hai lần), báo người hỗ trợ. |
 | Cảnh báo "app hiểu hóa đơn ghi theo NGHÌN ĐỒNG" | Mọi đơn giá trên hóa đơn đều dưới 1.000 đ nên app đã nhân 1.000. Xem lại bảng đơn giá; đúng thì tích xác nhận rồi xuất. |
 | Cảnh báo đối chiếu tổng | Xem chi tiết, chỉ xuất khi đã tích xác nhận. |

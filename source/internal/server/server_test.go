@@ -1,6 +1,7 @@
 package server
 
 import (
+	"crypto/ed25519"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -16,6 +17,8 @@ import (
 
 	"gkm/internal/update"
 )
+
+var testPriv = ed25519.NewKeyFromSeed([]byte("gkm-test-seed-0123456789abcdefgh"))
 
 type noPlat struct{}
 
@@ -44,27 +47,25 @@ func do(t *testing.T, h http.Handler, method, path, body string, hdr map[string]
 	return rec.Code, m
 }
 
-func TestConfigMergeAndTokenHidden(t *testing.T) {
+func TestConfigMergeNoToken(t *testing.T) {
 	a := newApp(t)
 	h := a.Handler()
+	// cấu hình của bản cũ còn mã truy cập: không được trả về giao diện, lần lưu sau thì xóa khỏi file
+	_ = os.MkdirAll(filepath.Join(a.Root, "config"), 0o755)
+	_ = os.WriteFile(a.settingsPath(), []byte(`{"outputDir":"E:\\old","updateToken":"secret123"}`), 0o644)
 	do(t, h, "POST", "/api/config", `{"outputDir":"E:\\out"}`, nil)
-	do(t, h, "POST", "/api/config", `{"updateRepo":"acme/gkm","updateToken":"secret123"}`, nil)
+	do(t, h, "POST", "/api/config", `{"updateRepo":"acme/gkm","updateToken":"secret456"}`, nil)
 	_, m := do(t, h, "GET", "/api/config", "", nil)
 	if m["outputDir"] != `E:\out` {
 		t.Fatalf("lưu repo không được làm mất thư mục xuất: %v", m["outputDir"])
 	}
-	if m["updateRepo"] != "acme/gkm" || m["hasUpdateToken"] != true {
+	if m["updateRepo"] != "acme/gkm" {
 		t.Fatalf("cấu hình cập nhật sai: %v", m)
 	}
 	b, _ := json.Marshal(m)
-	if strings.Contains(string(b), "secret123") {
-		t.Fatal("không được trả mã truy cập về giao diện")
-	}
-	// lưu thư mục xuất không được xóa kho/mã
-	do(t, h, "POST", "/api/config", `{"outputDir":"E:\\out2"}`, nil)
-	_, m = do(t, h, "GET", "/api/config", "", nil)
-	if m["updateRepo"] != "acme/gkm" || m["hasUpdateToken"] != true {
-		t.Fatalf("đổi thư mục xuất làm mất cấu hình cập nhật: %v", m)
+	f, _ := os.ReadFile(a.settingsPath())
+	if strings.Contains(string(b), "secret") || strings.Contains(string(f), "secret") || strings.Contains(string(b), "updateToken") || strings.Contains(string(f), "updateToken") {
+		t.Fatalf("mã truy cập phải bị bỏ hẳn: %s | %s", b, f)
 	}
 	if code, _ := do(t, h, "POST", "/api/config", `{"updateRepo":"../evil"}`, nil); code != 400 {
 		t.Fatalf("kho sai phải bị từ chối, được %d", code)
@@ -107,7 +108,8 @@ func TestUpdateFlow(t *testing.T) {
 	gh := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/repos/acme/gkm/contents/update/latest.json":
-			_ = json.NewEncoder(w).Encode(map[string]any{"version": "1.6.0", "sha256": hex.EncodeToString(sum[:]), "size": len(newExe), "notes": "bản thử"})
+			_ = json.NewEncoder(w).Encode(map[string]any{"version": "1.6.0", "sha256": hex.EncodeToString(sum[:]), "size": len(newExe), "notes": "bản thử",
+				"sig": update.Sign(testPriv, "1.6.0", hex.EncodeToString(sum[:]), int64(len(newExe)))})
 		case "/repos/acme/gkm/contents/update/GKM_NhapHoaDon.exe":
 			_, _ = w.Write(newExe)
 		default:
@@ -122,6 +124,7 @@ func TestUpdateFlow(t *testing.T) {
 	a.Updater.BaseURL = gh.URL
 	a.Updater.ExePath = func() (string, error) { return exe, nil }
 	a.Updater.Smoke = func(string, string) error { return nil }
+	a.Updater.PublicKey = testPriv.Public().(ed25519.PublicKey)
 	h := a.Handler()
 
 	// chưa nhập kho

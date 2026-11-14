@@ -173,4 +173,13 @@ Khiêm báo (hóa đơn KiotViet "2.xlsx" và kết quả "2 done.xlsx"): sản 
 - Hóa đơn có cột % giảm giá: mỗi dòng giảm từ trên 0% đến dưới 100% phải kiểm chứng được đơn giá là giá gốc, bằng cột giá sau giảm (Giá NET) hoặc bằng thành tiền = SL × đơn giá × (100% - % giảm), sai số 0,5%. Không kiểm chứng được thì cảnh báo và bắt xác nhận (nguy cơ trừ hai lần).
 - File có dòng 1 đúng 7 tiêu đề của mẫu nhập hàng là file app đã xuất: báo lỗi, không coi là hóa đơn.
 - Bỏ cảnh báo ổ C/ổ E khi xuất.
-- **Còn chờ Khiêm quyết** (chưa đổi): (a) Mẫu 6 có cột "ĐG ĐÃ CK 22%": có ghi 22% vào cột Giảm giá (%) không; (b) chiết khấu cấp cả hóa đơn (Mẫu 3 "Tỷ lệ CK 5%", Mẫu 9 "Giảm giá 1.070.100") có chia vào từng dòng không.
+- Hai việc còn chờ Khiêm quyết ở bản này đã làm ở 1.9.0 (mục 17).
+
+## 17. Cập nhật 14/11/2026: làm đủ 5 gợi ý (app 1.9.0)
+
+Khiêm duyệt "làm đủ 5 bước".
+- **Phiếu xuất kho (Mẫu 6) "ĐG ĐÃ CK 22%"**: % lấy từ tiêu đề cột, ghi vào cột F Giảm giá (%) của mọi dòng có giá. Đơn giá vẫn là ĐƠN GIÁ BÁN (giá gốc). Dòng nào giá gốc × (100% - 22%) lệch giá đã CK quá 0,5% thì cảnh báo.
+- **Chiết khấu cả hóa đơn** (Mẫu C, E và mẫu lạ X; tìm trong 12 dòng dưới bảng: "Tỷ lệ CK", "Chiết khấu %", "Giảm giá" số tiền...): chia vào cột F của mọi dòng hàng thường. Ghi bằng số tiền thì đổi ra % trên tổng sau giảm giá dòng, làm tròn 2 chữ số, lệch bao nhiêu đồng thì cảnh báo. Dòng đã có % riêng a thì gộp: 1 - (1 - a)(1 - b). Mẫu 3 → 5% cho 37 dòng; Mẫu 9 → 3,5%, dòng 10% thành 13,15%, lệch 77 đ.
+- **Chống xuất trùng**: dấu vân tay hóa đơn = mẫu, NCC, số, ngày, từng dòng (mã, giá, %, SL). Lưu trong `config/da_xuat.json` (tối đa 5.000 hóa đơn). Trùng thì báo và bắt xác nhận.
+- **Bỏ ô mã truy cập GitHub** (kho công khai không cần).
+- **Chữ ký số bản cập nhật**: latest.json có trường `sig` (Ed25519 ký "version, sha256, size"). App chỉ cài khi chữ ký khớp khóa công khai gắn sẵn. Khóa bí mật chỉ nằm ở `GKM/khoa_ky_cap_nhat/` trong thư mục dự án và bản sao lưu của Khiêm, không bao giờ lên GitHub. Máy còn 1.8.3 trở về trước chưa kiểm chữ ký, cập nhật lên 1.9.0 bình thường; từ 1.9.0 trở đi mới bắt buộc.

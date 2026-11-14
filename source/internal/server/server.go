@@ -57,8 +57,9 @@ type App struct {
 	port     int
 	quit     chan struct{}
 	quitOnce sync.Once
-	updating bool // đang tải/cài bản mới
-	restart  bool // sau khi thoát phải mở lại bản vừa cập nhật
+	updating bool       // đang tải/cài bản mới
+	histMu   sync.Mutex // khóa file lịch sử xuất (config\da_xuat.json)
+	restart  bool       // sau khi thoát phải mở lại bản vừa cập nhật
 }
 
 type entry struct {
@@ -112,6 +113,8 @@ type ConvertResp struct {
 	// false khi app đoán từ tên và kích thước file kéo thả; SrcDir rỗng khi không xác định được.
 	SrcDir   string `json:"srcDir"`
 	SrcExact bool   `json:"srcExact"`
+	// Duplicate: hóa đơn này (cùng nội dung) đã xuất trước đây; giao diện cảnh báo và bắt tích xác nhận.
+	Duplicate *ExportRecord `json:"duplicate,omitempty"`
 	// File có nhiều toa hàng: Part mô tả toa này, Parts là tất cả các toa (kể cả toa đầu, chính là phần trên), mỗi toa xuất một file.
 	Part  string         `json:"part,omitempty"`
 	Parts []*ConvertResp `json:"parts,omitempty"`
@@ -122,7 +125,7 @@ func New(version string, template []byte, root string, pl Platform, lg *log.Logg
 		results: map[string]*entry{}, started: time.Now(), quit: make(chan struct{})}
 	a.Updater = &update.Updater{Current: version, Cfg: func() update.Config {
 		s := a.loadSettings()
-		return update.Config{Repo: s.UpdateRepo, Token: s.UpdateToken}
+		return update.Config{Repo: s.UpdateRepo} // kho công khai nên không dùng mã truy cập (bỏ từ 1.9.0)
 	}}
 	return a
 }
@@ -133,14 +136,13 @@ func (a *App) DefaultOutputDir() string { return filepath.Join(a.Root, "output")
 func (a *App) settingsPath() string { return filepath.Join(a.Root, "config", "settings.json") }
 
 type settings struct {
-	OutputDir   string `json:"outputDir"`
-	UpdateRepo  string `json:"updateRepo,omitempty"`  // kho GitHub chứa bản cập nhật, dạng tên-tài-khoản/tên-kho
-	UpdateToken string `json:"updateToken,omitempty"` // mã truy cập chỉ đọc, chỉ cần khi kho riêng tư
-	LastSrcDir  string `json:"lastSrcDir,omitempty"`  // thư mục của file hóa đơn chọn lần trước (mở hộp chọn file ở đây)
+	OutputDir  string `json:"outputDir"`
+	UpdateRepo string `json:"updateRepo,omitempty"` // kho GitHub chứa bản cập nhật, dạng tên-tài-khoản/tên-kho
+	LastSrcDir string `json:"lastSrcDir,omitempty"` // thư mục của file hóa đơn chọn lần trước (mở hộp chọn file ở đây)
 }
 
 func (a *App) loadSettings() settings {
-	var s settings
+	var s settings // mã truy cập GitHub của bản cũ (updateToken) không còn đọc; lần lưu sau sẽ xóa khỏi file
 	if b, err := os.ReadFile(a.settingsPath()); err == nil {
 		_ = json.Unmarshal(b, &s)
 	}
@@ -254,9 +256,8 @@ func (a *App) handleClosing(w http.ResponseWriter, r *http.Request) {
 func (a *App) handleConfig(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		var in struct {
-			OutputDir   *string `json:"outputDir"`
-			UpdateRepo  *string `json:"updateRepo"`
-			UpdateToken *string `json:"updateToken"`
+			OutputDir  *string `json:"outputDir"`
+			UpdateRepo *string `json:"updateRepo"`
 		}
 		if err := json.NewDecoder(io.LimitReader(r.Body, 1<<16)).Decode(&in); err != nil {
 			fail(w, 400, "Yêu cầu không hợp lệ.")
@@ -278,9 +279,6 @@ func (a *App) handleConfig(w http.ResponseWriter, r *http.Request) {
 			}
 			cur.UpdateRepo = repo
 		}
-		if in.UpdateToken != nil {
-			cur.UpdateToken = strings.TrimSpace(*in.UpdateToken)
-		}
 		a.saveSettings(cur)
 	}
 	s := a.loadSettings()
@@ -292,7 +290,7 @@ func (a *App) handleConfig(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, map[string]any{
 		"ok": true, "version": a.Version, "root": a.Root, "rootExists": err == nil,
 		"outputDir": s.OutputDir, "defaultOutputDir": a.DefaultOutputDir(), "os": runtime.GOOS,
-		"updateRepo": repo, "hasUpdateToken": s.UpdateToken != "",
+		"updateRepo": repo,
 	})
 }
 
@@ -502,6 +500,10 @@ func (a *App) handleConvert(w http.ResponseWriter, r *http.Request) {
 		for _, p := range parts {
 			v := view(newID(), name, kind, p)
 			v.SrcDir, v.SrcExact, v.Part = srcDir, srcExact, p.Part
+			if rec := a.findExported(fingerprint(p)); rec != nil {
+				v.Duplicate, v.NeedConfirm = rec, true
+				a.Log.Printf("cảnh báo xuất trùng: %q%s đã xuất ngày %s ra %s", name, partLog(p), rec.At, rec.Path)
+			}
 			results[v.ID] = &entry{name: name, format: kind, grid: g, parsed: p}
 			views = append(views, v)
 			a.Log.Printf("phân tích %q (%s)%s: mẫu %s, %d dòng (%d thường, %d khuyến mại, %d hàng đổi, %d bỏ vì không có số lượng), %d cảnh báo, %d lỗi", name, kind, partLog(p), v.Profile, v.Rows, v.Normal, v.Promo, v.Exchange, v.Excluded, len(v.Warnings), len(v.Errors))
@@ -571,6 +573,10 @@ func (a *App) handleExport(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, "Hóa đơn có cảnh báo. Hãy xem lại rồi tích ô xác nhận trước khi xuất.")
 		return
 	}
+	if rec := a.findExported(fingerprint(p)); rec != nil && !in.Confirm {
+		fail(w, 400, "Hóa đơn này đã xuất ngày "+rec.At+" ra file "+rec.Path+". Muốn xuất lại thì tích ô xác nhận.")
+		return
+	}
 	dir := strings.TrimSpace(in.Dir)
 	if dir == "" || !filepath.IsAbs(dir) {
 		fail(w, 400, "Hãy nhập đường dẫn thư mục đầy đủ (ví dụ D:\\GKM_HoaDonNhapHang\\output).")
@@ -620,6 +626,7 @@ func (a *App) handleExport(w http.ResponseWriter, r *http.Request) {
 	cur.OutputDir = dir
 	a.saveSettings(cur)
 	a.Log.Printf("đã xuất %s (%d dòng) từ %q", path, len(rows), e.name)
+	a.recordExport(p, e.name, path, len(rows))
 	writeJSON(w, 200, map[string]any{"ok": true, "path": path, "name": filepath.Base(path), "rows": len(rows), "verified": true})
 }
 

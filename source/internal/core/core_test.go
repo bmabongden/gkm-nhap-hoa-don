@@ -370,7 +370,7 @@ func TestProfileFLastTableSLLay(t *testing.T) {
 	if p.Meta.Ngay != "20/10/2026" || p.SuggestedName() != "NhapHang_PhieuXuatKho_20102026.xlsx" {
 		t.Fatalf("ngày/tên: %q %s", p.Meta.Ngay, p.SuggestedName())
 	}
-	if len(p.Notes) != 1 || !strings.Contains(p.Notes[0].Detail, "2 bảng") {
+	if len(p.Notes) != 2 || !strings.Contains(p.Notes[0].Detail, "2 bảng") || !strings.Contains(p.Notes[1].Detail, "22%") {
 		t.Fatalf("thiếu ghi chú nhiều bảng: %+v", p.Notes)
 	}
 	for _, c := range p.Checks {
@@ -393,7 +393,7 @@ func TestProfileFLastTableSLLay(t *testing.T) {
 		{"2", "P2", "b", "1", "1", "100", "78", "100"},
 		{"", "", "TỔNG", "", "2", "", "", "200"}}
 	p3, err := Parse(gridOf(page))
-	if err != nil || len(p3.OutputRows()) != 2 || len(p3.Notes) != 0 {
+	if err != nil || len(p3.OutputRows()) != 2 || len(p3.Notes) != 1 || strings.Contains(p3.Notes[0].Detail, "bảng hóa đơn") {
 		t.Fatalf("tiêu đề lặp bị hiểu nhầm: %v %+v", err, p3)
 	}
 }

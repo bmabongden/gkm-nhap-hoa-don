@@ -1,6 +1,7 @@
 {
-  "version": "1.8.3",
-  "sha256": "3200ff75d2e36afcf79ae0492acd025e371dbcb4af96946d9d6702a96f2df646",
-  "size": 11953152,
-  "notes": "Bản 1.8.3 (rà soát toàn app): bỏ cảnh báo sai về ổ C; cảnh báo khi hóa đơn có % giảm giá mà không kiểm chứng được giá gốc; báo rõ khi thả nhầm file đã chuyển đổi."
+  "version": "1.9.0",
+  "sha256": "67d7fc4fd9592073bc636e5e3d3341e5abb6f48aadc416732de6f01d28c205a8",
+  "size": 11980288,
+  "notes": "Bản 1.9.0: ghi % chiết khấu phiếu xuất kho; chia chiết khấu cả hóa đơn vào từng dòng; cảnh báo hóa đơn đã xuất; bỏ ô mã GitHub; bản cập nhật có chữ ký số.",
+  "sig": "9MRnYy6RqPWZBkDrMgISbanqeFOWAHkeM0amHpZDyZvWYl2BiQshVfJ9ScNxipCR60PuKFq/S8zR7+DMjaAHDg=="
 }

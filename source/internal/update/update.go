@@ -1,17 +1,21 @@
-// Package update kiểm tra và cài bản mới của app từ một kho GitHub (công khai hoặc riêng tư có mã truy cập chỉ đọc).
+// Package update kiểm tra và cài bản mới của app từ kho GitHub công khai.
 //
 // Kho chứa hai file trên nhánh mặc định:
 //
-//	update/latest.json          {"version":"1.6.0","sha256":"<64 ký tự hex>","size":12345678,"notes":"..."}
+//	update/latest.json          {"version":"1.9.0","sha256":"<64 ký tự hex>","size":12345678,"notes":"...","sig":"<chữ ký>"}
 //	update/GKM_NhapHoaDon.exe   file .exe của đúng phiên bản đó
 //
-// App chỉ cập nhật khi người dùng bấm nút, kiểm tra SHA-256 và chạy thử "-version" của file tải về trước khi thay,
-// giữ lại bản cũ thành GKM_NhapHoaDon.exe.old để quay lại được.
+// "sig" là chữ ký số Ed25519 (base64) trên SignMessage(version, sha256, size), ký bằng khóa bí mật của Gia Khánh Motor
+// cất NGOÀI GitHub; khóa công khai nhúng trong app (PublicKeyB64). Ai chiếm được kho GitHub cũng không làm ra được chữ ký,
+// nên app từ chối mọi bản không có chữ ký đúng. App chỉ cập nhật khi người dùng bấm nút, kiểm tra chữ ký, SHA-256 và
+// chạy thử "-version" của file tải về trước khi thay, giữ lại bản cũ thành GKM_NhapHoaDon.exe.old để quay lại được.
 package update
 
 import (
 	"context"
+	"crypto/ed25519"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -31,6 +35,43 @@ import (
 // DefaultRepo là kho mặc định (owner/repo) khi người dùng chưa nhập gì trong màn hình Cập nhật. Có thể đổi khi build bằng -ldflags.
 var DefaultRepo = "bmabongden/gkm-nhap-hoa-don"
 
+// PublicKeyB64 là khóa công khai Ed25519 (base64) dùng để kiểm tra chữ ký bản cập nhật.
+var PublicKeyB64 = "pXnIRJhe7yWiggNTkCML+8sdFjdVy2dAWDWYaIZ0atc="
+
+// SignMessage là nội dung được ký cho một bản cập nhật.
+func SignMessage(version, sha string, size int64) []byte {
+	return []byte(fmt.Sprintf("GKM-NhapHoaDon update v1\nversion=%s\nsha256=%s\nsize=%d\n", version, strings.ToLower(sha), size))
+}
+
+// Sign ký bản cập nhật (dùng trong công cụ phát hành, không dùng trong app).
+func Sign(priv ed25519.PrivateKey, version, sha string, size int64) string {
+	return base64.StdEncoding.EncodeToString(ed25519.Sign(priv, SignMessage(version, sha, size)))
+}
+
+// verify kiểm tra chữ ký số của latest.json; sai hoặc thiếu thì không được cài.
+func (u *Updater) verify(in *Info) error {
+	pub, err := u.pubKey()
+	if err != nil {
+		return err
+	}
+	sig, err := base64.StdEncoding.DecodeString(strings.TrimSpace(in.Sig))
+	if err != nil || len(sig) != ed25519.SignatureSize || !ed25519.Verify(pub, SignMessage(in.Version, in.SHA256, in.Size), sig) {
+		return fmt.Errorf("bản %s trên kho không có chữ ký số hợp lệ của Gia Khánh Motor nên app KHÔNG cài (có thể kho bị người lạ sửa); hãy báo người hỗ trợ", in.Version)
+	}
+	return nil
+}
+
+func (u *Updater) pubKey() (ed25519.PublicKey, error) {
+	if len(u.PublicKey) == ed25519.PublicKeySize {
+		return u.PublicKey, nil
+	}
+	b, err := base64.StdEncoding.DecodeString(PublicKeyB64)
+	if err != nil || len(b) != ed25519.PublicKeySize {
+		return nil, errors.New("app thiếu khóa kiểm tra chữ ký nên không cập nhật được")
+	}
+	return ed25519.PublicKey(b), nil
+}
+
 const (
 	manifestPath = "update/latest.json"
 	exePath      = "update/GKM_NhapHoaDon.exe"
@@ -40,8 +81,7 @@ const (
 
 // Config là cấu hình lưu trong config\settings.json.
 type Config struct {
-	Repo  string `json:"repo"`  // owner/repo
-	Token string `json:"token"` // mã truy cập GitHub chỉ đọc (chỉ cần với kho riêng tư)
+	Repo string `json:"repo"` // owner/repo (kho công khai, không cần mã truy cập)
 }
 
 var reRepo = regexp.MustCompile(`^[A-Za-z0-9._-]{1,100}/[A-Za-z0-9._-]{1,100}$`)
@@ -65,6 +105,7 @@ type Info struct {
 	SHA256  string `json:"sha256"`
 	Size    int64  `json:"size"`
 	Notes   string `json:"notes"`
+	Sig     string `json:"sig,omitempty"`
 	Newer   bool   `json:"newer"`
 }
 
@@ -78,6 +119,8 @@ type Updater struct {
 	ExePath func() (string, error)
 	// Smoke chạy thử file mới và xác nhận nó báo đúng phiên bản (mặc định chạy "<file> -version").
 	Smoke func(path, wantVersion string) error
+	// PublicKey thay khóa nhúng sẵn (chỉ dùng khi thử nghiệm).
+	PublicKey ed25519.PublicKey
 }
 
 func (u *Updater) base() string {
@@ -121,9 +164,6 @@ func (u *Updater) get(ctx context.Context, c Config, path string) (*http.Respons
 	req.Header.Set("Accept", "application/vnd.github.raw+json")
 	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
 	req.Header.Set("User-Agent", "GKM-NhapHoaDon/"+u.Current)
-	if c.Token != "" {
-		req.Header.Set("Authorization", "Bearer "+c.Token)
-	}
 	resp, err := u.client().Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("không kết nối được GitHub (kiểm tra Internet): %w", err)
@@ -132,9 +172,9 @@ func (u *Updater) get(ctx context.Context, c Config, path string) (*http.Respons
 		defer resp.Body.Close()
 		switch resp.StatusCode {
 		case http.StatusNotFound:
-			return nil, errors.New("không thấy bản cập nhật trên kho (sai tên kho, kho riêng tư mà chưa nhập mã truy cập, hoặc chưa có thư mục update)")
+			return nil, errors.New("không thấy bản cập nhật trên kho (sai tên kho, kho chưa công khai, hoặc chưa có thư mục update)")
 		case http.StatusUnauthorized, http.StatusForbidden:
-			return nil, fmt.Errorf("GitHub từ chối truy cập (mã %d): kiểm tra mã truy cập chỉ đọc, hoặc đã hết lượt gọi tạm thời", resp.StatusCode)
+			return nil, fmt.Errorf("GitHub từ chối truy cập (mã %d): có thể đã hết lượt gọi tạm thời, hãy thử lại sau ít phút", resp.StatusCode)
 		}
 		return nil, fmt.Errorf("GitHub trả lỗi %d", resp.StatusCode)
 	}
@@ -167,7 +207,13 @@ func (u *Updater) Check(ctx context.Context) (*Info, error) {
 	if in.Size <= 0 || in.Size > maxExeSize {
 		return nil, errors.New("latest.json ghi kích thước file không hợp lệ")
 	}
-	in.Newer = Newer(in.Version, u.Current)
+	newer := Newer(in.Version, u.Current)
+	if newer {
+		if err := u.verify(&in); err != nil {
+			return nil, err
+		}
+	}
+	in.Newer = newer
 	return &in, nil
 }
 
@@ -179,6 +225,9 @@ func (u *Updater) Download(ctx context.Context, info *Info) (string, error) {
 	}
 	if !info.Newer {
 		return "", errors.New("không có bản mới hơn để cập nhật")
+	}
+	if err := u.verify(info); err != nil {
+		return "", err
 	}
 	cur, err := u.exe()
 	if err != nil {

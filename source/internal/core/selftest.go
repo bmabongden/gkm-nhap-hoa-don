@@ -14,7 +14,8 @@ import (
 //
 //	Mẫu 1: 44 dòng, khác kết quả cũ đúng 1 ô (A44: PTXD0164 thay vì o).
 //	Mẫu 2: 80 dòng, khác 80 ô Tên hàng (cột B) vì nay điền tên.
-//	Mẫu 3: 55 dòng đầu khớp hoàn toàn kết quả mẫu (kết quả mẫu cũ chưa có 9 dòng hàng đổi); thêm 9 dòng hàng đổi đơn giá 0 ở cuối, tổng 64 dòng.
+//	Mẫu 3: 55 dòng đầu khớp kết quả mẫu trừ 37 ô cột F: từ 1.9.0 chiết khấu cả hóa đơn "Tỷ lệ CK 5 %" được chia vào cột
+//	Giảm giá (%) của 37 dòng hàng thường (Khiêm 14/11/2026); thêm 9 dòng hàng đổi đơn giá 0 ở cuối, tổng 64 dòng.
 type SampleCase struct {
 	N                             int
 	Input, Expected               string
@@ -30,7 +31,7 @@ type SampleCase struct {
 var SampleCases = []SampleCase{
 	{1, "Mau 1.xlsx", "Ket qua mau 1.xlsx", ProfileA, 44, 43, 1, 0, 0, 1, "A", "A44|PTXD0164|o", "NhapHang_PBH002331_23072026.xlsx", []string{"dinh-dang-khac/Mau1.xls"}},
 	{2, "Mau 2.xlsx", "Ket qua mau 2.xlsx", ProfileB, 80, 80, 0, 0, 0, 80, "B", "", "NhapHang_BinhMinh_25072026.xlsx", []string{"dinh-dang-khac/Mau2.xls"}},
-	{3, "Mau 3.xlsx", "Ket qua mau 3.xlsx", ProfileC, 64, 37, 18, 9, 0, 0, "", "", "NhapHang_08-26-03_01082026.xlsx", []string{"dinh-dang-khac/Mau3.xls", "dinh-dang-khac/Mau3_xml2003.xls"}},
+	{3, "Mau 3.xlsx", "Ket qua mau 3.xlsx", ProfileC, 64, 37, 18, 9, 0, 37, "F", "", "NhapHang_08-26-03_01082026.xlsx", []string{"dinh-dang-khac/Mau3.xls", "dinh-dang-khac/Mau3_xml2003.xls"}},
 }
 
 // SelfTestResult là kết quả kiểm tra một mẫu.
@@ -39,6 +40,7 @@ type SelfTestResult struct {
 	OK       bool
 	Summary  string
 	Problems []string
+	Skipped  bool // thiếu file mẫu nên không kiểm tra (không tính là đạt)
 }
 
 // RunSelfTest chạy cả 3 mẫu qua đúng đường xử lý của app và so từng ô với kết quả mẫu.
@@ -182,6 +184,7 @@ func runExtra(read func(name string) ([]byte, error), template []byte) []SelfTes
 		data, err := read(c.file)
 		if err != nil && c.n >= 7 && errors.Is(err, fs.ErrNotExist) {
 			// mẫu thêm sau: máy cập nhật bằng nút Cập nhật chưa có file mẫu này thì bỏ qua, không tính lỗi
+			r.Skipped = true
 			r.Summary = fmt.Sprintf("Mẫu %d: bỏ qua vì thư mục samples chưa có %s", c.n, c.file)
 			out = append(out, r)
 			continue
