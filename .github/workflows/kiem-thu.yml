@@ -1,0 +1,23 @@
+# Chạy kiểm thử Go cho mỗi PR, trước khi bấm Merge.
+name: Kiem thu
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  go-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: source/go.mod
+          cache: false
+      - name: go test
+        working-directory: source
+        env:
+          GOFLAGS: -mod=vendor
+          GOTOOLCHAIN: local
+        run: go test ./internal/... ./cmd/...

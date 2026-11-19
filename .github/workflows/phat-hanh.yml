@@ -1,0 +1,63 @@
+# Tự build, ký và phát hành bản cập nhật online mỗi khi main có phiên bản mới.
+# Phiên bản lấy từ source/cmd/gkm/main.go; nếu khác update/latest.json thì build exe (Go, không cần
+# Windows), ký Ed25519 bằng secret GKM_SIGN_KEY (nội dung file gkm_update_ed25519.key), rồi commit
+# update/latest.json + update/GKM_NhapHoaDon.exe lên main. Các máy nhận ở lần bấm Cập nhật sau.
+name: Phat hanh ban moi
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['update/**']
+  workflow_dispatch:
+
+concurrency:
+  group: phat-hanh
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  phat-hanh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Kiem tra ban da phat hanh chua
+        id: ban
+        run: |
+          VER=$(grep -oE 'const version = "[0-9]+\.[0-9]+\.[0-9]+"' source/cmd/gkm/main.go | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          OLD=$(python3 -c "import json;print(json.load(open('update/latest.json',encoding='utf-8'))['version'])" 2>/dev/null || echo none)
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          if [ "$VER" = "$OLD" ]; then echo "Ban $VER da phat hanh."; echo "can=false" >> "$GITHUB_OUTPUT"; else echo "can=true" >> "$GITHUB_OUTPUT"; fi
+
+      - uses: actions/setup-go@v5
+        if: steps.ban.outputs.can == 'true'
+        with:
+          go-version-file: source/go.mod
+          cache: false
+
+      - name: Build va ky
+        if: steps.ban.outputs.can == 'true'
+        env:
+          SIGN_KEY: ${{ secrets.GKM_SIGN_KEY }}
+        run: |
+          [ -n "$SIGN_KEY" ] || { echo "Chua co secret GKM_SIGN_KEY"; exit 1; }
+          export GOTOOLCHAIN=local
+          bash build/build.sh
+          KEY="$RUNNER_TEMP/gkm_update_ed25519.key"
+          umask 077; printf '%s\n' "$SIGN_KEY" > "$KEY"
+          # Ghi chú = dòng tiêu đề commit (ví dụ "Bản 1.9.1: ..."), bỏ dòng "Merge pull request".
+          NOTES=$(git log -1 --format=%B | grep -v '^Merge pull request' | grep -v '^$' | head -1)
+          GKM_SIGN_KEY="$KEY" bash build/publish_update.sh "${NOTES:-Bản ${{ steps.ban.outputs.version }}}"
+          rm -f "$KEY"
+
+      - name: Dua ban cap nhat len main
+        if: steps.ban.outputs.can == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add update/latest.json update/GKM_NhapHoaDon.exe
+          git commit -m "Phát hành bản ${{ steps.ban.outputs.version }} (tự động)"
+          git push origin HEAD:main
