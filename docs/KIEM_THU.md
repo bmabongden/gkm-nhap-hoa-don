@@ -1,4 +1,4 @@
-# Kết quả kiểm thử app GKM - Nhập Hóa Đơn 1.9.0 (bản chính thức, sửa 14/11/2026)
+# Kết quả kiểm thử app GKM - Nhập Hóa Đơn 1.9.1 (bản chính thức, sửa 14/11/2026)
 
 File: `app/GKM_NhapHoaDon.exe`, PE32+ GUI x86-64 build bằng Go (cross-compile từ Linux), 12,0 MB (11.980.288 byte), SHA-256 `67d7fc4fd9592073bc636e5e3d3341e5abb6f48aadc416732de6f01d28c205a8` (build lại cho ra đúng mã này).
 Khiêm yêu cầu chốt app ngày 02/10/2026. Chức năng gửi Telegram (1.3.x) đã gỡ hẳn theo yêu cầu của Khiêm; app chỉ còn đọc hóa đơn, xem trước và xuất file.
@@ -11,6 +11,7 @@ Khiêm yêu cầu chốt app ngày 02/10/2026. Chức năng gửi Telegram (1.3.
 5. Đã bỏ các chức năng từng thử: tự nhập KiotViet, gửi Zalo Web, gửi Telegram (Khiêm yêu cầu bỏ).
 6. (Bản 1.5.0, 04/10/2026) Dòng chỉ có số lượng vẫn nhập với giá 0 (kể cả hàng đổi/bảo hành), dòng có giá không có số lượng bị bỏ; sửa nút "Mở thư mục chứa file"; thêm dòng bản quyền nội bộ ở cuối ứng dụng; logo mới (biểu tượng .exe, cửa sổ, đầu trang).
 12. (Bản 1.9.0, 14/11/2026, làm đủ 5 gợi ý theo yêu cầu của Khiêm) (1) Phiếu xuất kho có cột "ĐG ĐÃ CK 22%": ghi 22% vào Giảm giá (%), đối chiếu với giá đã CK; (2) chiết khấu cả hóa đơn chia vào % từng dòng (Mẫu 3: 5% ở cột F cho 37 dòng; Mẫu 9: dòng 10% thành 13,15%, lệch làm tròn 77 đ có cảnh báo); (3) app nhớ hóa đơn đã xuất (`config/da_xuat.json`) và cảnh báo khi xuất lại; (4) bỏ ô dán mã GitHub; (5) bản cập nhật phải có chữ ký số Ed25519 của Gia Khánh Motor (khóa công khai gắn trong app, khóa bí mật không lên GitHub). Selftest báo BỎ QUA thay vì ĐẠT khi thiếu file mẫu.
+13. (Bản 1.9.1, 19/11/2026) Đổi khóa chữ ký số bản cập nhật (khóa cũ bị mất); bản cập nhật do trợ lý AI ký ngay trong PR nên gộp vào main là phát hành. Máy 1.9.0 phải chép đè file .exe 1.9.1 một lần.
 11. (Bản 1.8.3, 14/11/2026, rà soát toàn app theo yêu cầu của Khiêm) Bỏ cảnh báo sai "File đang nằm trên ổ C, mặc định là ổ E" (máy Khiêm không có ổ E, thư mục xuất nay theo file hóa đơn); cảnh báo khi hóa đơn có % giảm giá mà không kiểm chứng được đơn giá là giá gốc (tránh trừ hai lần); từ chối rõ ràng khi thả nhầm file nhập hàng đã chuyển đổi; sửa chữ và tài liệu cũ.
 10. (Bản 1.8.2, 14/11/2026) Hóa đơn có giá gốc và % giảm giá: nhập giá gốc vào Đơn giá và % vào Giảm giá (%), không nhập giá đã trừ (Khiêm báo với hóa đơn KiotViet "2.xlsx"). Số hóa đơn KiotViet lấy từ tên sheet.
 9. (Bản 1.8.1, 14/11/2026) Sửa lỗi Khiêm báo: đơn giá thiếu hệ số 1.000. Đọc số dạng chữ không phụ thuộc dấu . hay , (dấu đứng sau là thập phân; một loại dấu với các nhóm đúng 3 chữ số là phân cách nghìn); hóa đơn mà đơn giá cao nhất dưới 1.000 đ thì nhân 1.000 kèm cảnh báo; đọc cột "Tên hàng hóa, dịch vụ" và số phiếu ở ô "Số:" của mẫu lạ (phiếu giao hàng MISA, Mẫu 8).
