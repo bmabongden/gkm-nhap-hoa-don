@@ -1,7 +1,8 @@
-# Tự build, ký và phát hành bản cập nhật online mỗi khi main có phiên bản mới.
-# Phiên bản lấy từ source/cmd/gkm/main.go; nếu khác update/latest.json thì build exe (Go, không cần
-# Windows), ký Ed25519 bằng secret GKM_SIGN_KEY (nội dung file gkm_update_ed25519.key), rồi commit
-# update/latest.json + update/GKM_NhapHoaDon.exe lên main. Các máy nhận ở lần bấm Cập nhật sau.
+# Kiểm tra bản cập nhật online mỗi khi main thay đổi.
+# Cách chính (từ 1.9.1): trợ lý AI build + ký bản mới ngay trong PR nâng phiên bản (khóa bí mật nằm trong
+# thư mục dự án GKM/khoa_ky_cap_nhat/, không lên GitHub), nên khi bấm Merge là phát hành xong và việc này
+# không phải làm gì. Dự phòng: nếu PR quên update/ mà repo có secret GKM_SIGN_KEY thì việc này tự build,
+# ký rồi commit update/ lên main; không có secret thì báo lỗi để biết cần ký.
 name: Phat hanh ban moi
 
 on:
@@ -43,7 +44,7 @@ jobs:
         env:
           SIGN_KEY: ${{ secrets.GKM_SIGN_KEY }}
         run: |
-          [ -n "$SIGN_KEY" ] || { echo "Chua co secret GKM_SIGN_KEY"; exit 1; }
+          [ -n "$SIGN_KEY" ] || { echo "::error::Ban moi chua duoc ky: PR nang phien ban phai kem update/ (tro ly AI ky bang build/publish_update.sh), hoac them secret GKM_SIGN_KEY"; exit 1; }
           export GOTOOLCHAIN=local
           bash build/build.sh
           KEY="$RUNNER_TEMP/gkm_update_ed25519.key"

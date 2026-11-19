@@ -183,3 +183,9 @@ Khiêm duyệt "làm đủ 5 bước".
 - **Chống xuất trùng**: dấu vân tay hóa đơn = mẫu, NCC, số, ngày, từng dòng (mã, giá, %, SL). Lưu trong `config/da_xuat.json` (tối đa 5.000 hóa đơn). Trùng thì báo và bắt xác nhận.
 - **Bỏ ô mã truy cập GitHub** (kho công khai không cần).
 - **Chữ ký số bản cập nhật**: latest.json có trường `sig` (Ed25519 ký "version, sha256, size"). App chỉ cài khi chữ ký khớp khóa công khai gắn sẵn. Khóa bí mật chỉ nằm ở `GKM/khoa_ky_cap_nhat/` trong thư mục dự án và bản sao lưu của Khiêm, không bao giờ lên GitHub. Máy còn 1.8.3 trở về trước chưa kiểm chữ ký, cập nhật lên 1.9.0 bình thường; từ 1.9.0 trở đi mới bắt buộc.
+
+## 18. Cập nhật 19/11/2026: bản 1.9.1 đổi khóa ký, phát hành tự động
+
+- Khóa ký cũ bị mất, Khiêm chọn tạo khóa mới. Khóa công khai mới gắn trong app 1.9.1; khóa bí mật nằm ở `GKM/khoa_ky_cap_nhat/gkm_update_ed25519.key` trong thư mục dự án, không lên GitHub.
+- Máy đang chạy 1.9.0 không nhận được bản ký bằng khóa mới, phải chép đè `GKM_NhapHoaDon.exe` bản 1.9.1 bằng tay một lần. Từ 1.9.1 cập nhật online lại bình thường.
+- Phát hành: trợ lý AI nâng `version`, chạy `build/build.sh` rồi `build/publish_update.sh "<ghi chú>"`, đưa `update/` vào PR. Khiêm bấm Merge là các máy nhận bản mới.

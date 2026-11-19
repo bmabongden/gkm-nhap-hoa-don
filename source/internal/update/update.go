@@ -36,7 +36,7 @@ import (
 var DefaultRepo = "bmabongden/gkm-nhap-hoa-don"
 
 // PublicKeyB64 là khóa công khai Ed25519 (base64) dùng để kiểm tra chữ ký bản cập nhật.
-var PublicKeyB64 = "pXnIRJhe7yWiggNTkCML+8sdFjdVy2dAWDWYaIZ0atc="
+var PublicKeyB64 = "oJXSUXGaZV+cTikvAqoo5hb6DaS14f3co3ciq9tyYMI="
 
 // SignMessage là nội dung được ký cho một bản cập nhật.
 func SignMessage(version, sha string, size int64) []byte {

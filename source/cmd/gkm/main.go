@@ -18,7 +18,7 @@ import (
 	"gkm/internal/update"
 )
 
-const version = "1.9.0"
+const version = "1.9.1"
 
 //go:embed template.xlsx
 var embeddedTemplate []byte

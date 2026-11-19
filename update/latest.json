@@ -1,7 +1,7 @@
 {
-  "version": "1.9.0",
-  "sha256": "67d7fc4fd9592073bc636e5e3d3341e5abb6f48aadc416732de6f01d28c205a8",
-  "size": 11980288,
-  "notes": "Bản 1.9.0: ghi % chiết khấu phiếu xuất kho; chia chiết khấu cả hóa đơn vào từng dòng; cảnh báo hóa đơn đã xuất; bỏ ô mã GitHub; bản cập nhật có chữ ký số.",
-  "sig": "9MRnYy6RqPWZBkDrMgISbanqeFOWAHkeM0amHpZDyZvWYl2BiQshVfJ9ScNxipCR60PuKFq/S8zR7+DMjaAHDg=="
+  "version": "1.9.1",
+  "sha256": "2e178933be43bb43c336e4b9ddca9f62f34d256ab1bc2f683d3e910f58d763d6",
+  "size": 11980800,
+  "notes": "Bản 1.9.1: đổi khóa chữ ký số bản cập nhật; từ nay phát hành tự động khi gộp vào main.",
+  "sig": "j2T4iEf87bM6lmeWS2phnX9hwG+jV8T/EsGJLlz9M9l1Tg4N4LHUK/H8XkPq2Ds04oQLJFV6vd+0id1DVl1BBQ=="
 }
