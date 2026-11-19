@@ -6,6 +6,6 @@ App Windows độc lập "GKM - Nhập Hóa Đơn" cho Gia Khánh Motor: kéo th
 - Kiểm tra: `app\KiemTraMau.bat`. Kết quả kiểm thử đã làm: `docs\KIEM_THU.md` (kèm phần chưa kiểm chứng trên Windows thật).
 - Build lại: `build\build.bat` (Windows, cần Go 1.23+) hoặc `build/build.sh`. Thư viện đã có sẵn trong `source\vendor`.
 - Quy tắc: `docs\GKM_Quy_Tac_Anh_Xa.md`. Goal mới của Project: `docs\GOAL_MOI.md`.
-- Cập nhật online: app đọc `update/latest.json` và `update/GKM_NhapHoaDon.exe` trong kho này (xem `docs\HUONG_DAN.md` mục 4). Phát hành bản mới: `build/build.sh` rồi `bash build/publish_update.sh "ghi chú"`, commit và push thư mục `update/`.
+- Cập nhật online: app đọc `update/latest.json` và `update/GKM_NhapHoaDon.exe` trong kho này (xem `docs\HUONG_DAN.md` mục 4). Phát hành bản mới (từ 19/11/2026 tự động): nâng `const version` trong `source/cmd/gkm/main.go`, gộp vào `main` là GitHub Actions (`.github/workflows/phat-hanh.yml`) tự build, ký bằng secret `GKM_SIGN_KEY` và commit thư mục `update/`; ghi chú lấy từ tiêu đề commit. Cách tay (`build/build.sh` rồi `bash build/publish_update.sh "ghi chú"`) vẫn dùng được.
 - Thư mục `samples\` (hóa đơn mẫu thật của nhà cung cấp) KHÔNG nằm trong kho công khai; kiểm thử mẫu (`app\KiemTraMau.bat`, `--selftest`, `go test`) chỉ chạy đủ khi chép thư mục `samples` từ bản đầy đủ của Gia Khánh Motor vào, nếu không thì được bỏ qua.
 - Ứng dụng chỉ sử dụng nội bộ Gia Khánh Motor, vui lòng không sao chép dưới mọi hình thức.
